@@ -734,6 +734,9 @@ class HayamimiGUI(tk.Tk):
                     self.is_minimal = is_minimal
                     self.buffer = ""
 
+                def reconfigure(self, *args, **kwargs):
+                    pass
+
                 def write(self, s):
                     for ch in s:
                         if ch in ("\r", "\n"):
@@ -832,6 +835,9 @@ class HayamimiGUI(tk.Tk):
                 def __init__(self, gui_obj):
                     self.gui_obj = gui_obj
                     self.buffer = ""
+
+                def reconfigure(self, *args, **kwargs):
+                    pass
 
                 def write(self, s):
                     for ch in s:
