@@ -236,14 +236,29 @@ class HayamimiGUI(tk.Tk):
         )
         self.dl_btn.pack(side=tk.LEFT)
 
-        self.dl_status_var = tk.StringVar(value="")
-        self.dl_status_lbl = ttk.Label(
-            self.dl_frame,
-            textvariable=self.dl_status_var,
-            font=("Helvetica", 9),
-            foreground="#333333",
+        status_subframe = ttk.Frame(self.dl_frame)
+        status_subframe.pack(side=tk.LEFT, padx=(15, 0), fill=tk.Y)
+
+        self.dl_total_status_var = tk.StringVar(value="Total Progress: Idle")
+        self.dl_total_status_lbl = ttk.Label(
+            status_subframe,
+            textvariable=self.dl_total_status_var,
+            font=("Helvetica", 9, "bold"),
+            foreground="#111111",
         )
-        self.dl_status_lbl.pack(side=tk.LEFT, padx=(15, 0))
+        self.dl_total_status_lbl.pack(anchor=tk.W)
+
+        self.dl_file_status_var = tk.StringVar(value="Current File: Ready")
+        self.dl_file_status_lbl = ttk.Label(
+            status_subframe,
+            textvariable=self.dl_file_status_var,
+            font=("Helvetica", 8),
+            foreground="#555555",
+        )
+        self.dl_file_status_lbl.pack(anchor=tk.W)
+
+        # Legacy alias for compatibility
+        self.dl_status_var = self.dl_total_status_var
 
         # 2. Audio Input Source & Device Selector
         self.audio_frame = ttk.LabelFrame(top_frame, text="", padding=10)
@@ -632,9 +647,27 @@ class HayamimiGUI(tk.Tk):
         thread = threading.Thread(target=reader, daemon=True)
         thread.start()
 
+    def _parse_download_line(self, line: str, is_minimal: bool):
+        if not hasattr(self, "_dl_model_count"):
+            self._dl_model_count = 0
+            self._dl_total_models = 4 if is_minimal else 10
+
+        if line.startswith("[get ]") or line.startswith("[skip]"):
+            self._dl_model_count += 1
+            pct = min(100, int((self._dl_model_count / self._dl_total_models) * 100))
+            label = line[6:].strip()
+            self.dl_total_status_var.set(
+                f"Total Progress: Model {self._dl_model_count}/{self._dl_total_models} - {label} ({pct}%)"
+            )
+            self.dl_file_status_var.set("Current File: Initializing...")
+        elif "%" in line:
+            self.dl_file_status_var.set(f"Current File: {line}")
+
     def _run_download_subprocess(self, cmd: list[str], on_complete=None):
         def reader():
             try:
+                self._dl_model_count = 0
+                self._dl_total_models = 4 if "--minimal" in cmd else 10
                 env = os.environ.copy()
                 pythonpath = env.get("PYTHONPATH", "")
                 paths_to_add = [ROOT_DIR, os.path.join(ROOT_DIR, "scripts")]
@@ -660,24 +693,26 @@ class HayamimiGUI(tk.Tk):
                     if ch in ("\r", "\n"):
                         text = buffer.strip()
                         if text:
-                            self.after(0, self.dl_status_var.set, text)
+                            self.after(0, self._parse_download_line, text, "--minimal" in cmd)
                             self._log(text + "\n")
                         buffer = ""
                     else:
                         buffer += ch
                 if buffer.strip():
                     text = buffer.strip()
-                    self.after(0, self.dl_status_var.set, text)
+                    self.after(0, self._parse_download_line, text, "--minimal" in cmd)
                     self._log(text + "\n")
 
                 proc.wait()
                 if proc.returncode != 0:
                     err_msg = f"Error (code {proc.returncode})"
-                    self.after(0, self.dl_status_var.set, err_msg)
+                    self.after(0, self.dl_total_status_var.set, f"Total Progress: {err_msg}")
+                    self.after(0, self.dl_file_status_var.set, err_msg)
                     self._log(f"\n[Model Download Process Error] Download subprocess exited with code {proc.returncode}\n")
             except Exception as e:
                 err_msg = f"Error: {e}"
-                self.after(0, self.dl_status_var.set, err_msg)
+                self.after(0, self.dl_total_status_var.set, f"Total Progress: {err_msg}")
+                self.after(0, self.dl_file_status_var.set, err_msg)
                 self._log(f"\n[Model Download Exception] {e}\n")
             finally:
                 if on_complete:
@@ -692,8 +727,9 @@ class HayamimiGUI(tk.Tk):
             import traceback
 
             class StatusWriter(io.TextIOBase):
-                def __init__(self, gui_obj):
+                def __init__(self, gui_obj, is_minimal):
                     self.gui_obj = gui_obj
+                    self.is_minimal = is_minimal
                     self.buffer = ""
 
                 def write(self, s):
@@ -701,7 +737,7 @@ class HayamimiGUI(tk.Tk):
                         if ch in ("\r", "\n"):
                             line = self.buffer.strip()
                             if line:
-                                self.gui_obj.after(0, self.gui_obj.dl_status_var.set, line)
+                                self.gui_obj.after(0, self.gui_obj._parse_download_line, line, self.is_minimal)
                                 self.gui_obj._log(line + "\n")
                             self.buffer = ""
                         else:
@@ -711,11 +747,13 @@ class HayamimiGUI(tk.Tk):
                 def flush(self):
                     if self.buffer.strip():
                         line = self.buffer.strip()
-                        self.gui_obj.after(0, self.gui_obj.dl_status_var.set, line)
+                        self.gui_obj.after(0, self.gui_obj._parse_download_line, line, self.is_minimal)
                         self.gui_obj._log(line + "\n")
                         self.buffer = ""
 
-            writer = StatusWriter(self)
+            self._dl_model_count = 0
+            self._dl_total_models = 4 if minimal else 10
+            writer = StatusWriter(self, minimal)
             old_stdout, old_stderr = sys.stdout, sys.stderr
             try:
                 sys.stdout = writer
@@ -737,7 +775,8 @@ class HayamimiGUI(tk.Tk):
             except Exception as e:
                 err_msg = f"Error: {e}"
                 tb_str = traceback.format_exc()
-                self.after(0, self.dl_status_var.set, err_msg)
+                self.after(0, self.dl_total_status_var.set, f"Total Progress: {err_msg}")
+                self.after(0, self.dl_file_status_var.set, err_msg)
                 self._log(f"\n[Model Download Error] {err_msg}\n{tb_str}\n")
             finally:
                 sys.stdout, sys.stderr = old_stdout, old_stderr
@@ -755,14 +794,18 @@ class HayamimiGUI(tk.Tk):
         py_cmd = get_python_cmd()
 
         self.dl_btn.config(state=tk.DISABLED)
-        self.dl_status_var.set(self.t("model_download.started"))
+        self.start_stop_btn.config(state=tk.DISABLED)
+        self.dl_total_status_var.set("Total Progress: " + self.t("model_download.started"))
+        self.dl_file_status_var.set("Current File: Starting...")
 
         def complete():
             self.dl_btn.config(state=tk.NORMAL)
+            self.start_stop_btn.config(state=tk.NORMAL)
             self.download_process = None
-            cur_status = self.dl_status_var.get()
+            cur_status = self.dl_total_status_var.get()
             if not cur_status or ("Error" not in cur_status and "code" not in cur_status):
-                self.dl_status_var.set(self.t("model_download.completed"))
+                self.dl_total_status_var.set("Total Progress: " + self.t("model_download.completed"))
+                self.dl_file_status_var.set("Current File: Completed")
 
         if py_cmd is None or getattr(sys, "frozen", False):
             self._run_download_in_thread(self.minimal_var.get(), on_complete=complete)

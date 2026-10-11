@@ -56,7 +56,9 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         app.minimal_var = MagicMock()
         app.minimal_var.get.return_value = True
         app.dl_btn = MagicMock()
-        app.dl_status_var = MagicMock()
+        app.start_stop_btn = MagicMock()
+        app.dl_total_status_var = MagicMock()
+        app.dl_file_status_var = MagicMock()
         app._run_download_subprocess = MagicMock()
         app.t = MagicMock(return_value="Starting Model Download")
 
@@ -64,7 +66,8 @@ class TestHayamimiGUIUnit(unittest.TestCase):
             gui.HayamimiGUI._start_download(app)
 
         app.dl_btn.config.assert_called_with(state=gui.tk.DISABLED)
-        app.dl_status_var.set.assert_called_with("Starting Model Download")
+        app.start_stop_btn.config.assert_called_with(state=gui.tk.DISABLED)
+        app.dl_total_status_var.set.assert_called_with("Total Progress: Starting Model Download")
         app._run_download_subprocess.assert_called_once()
 
     @patch("gui.HayamimiGUI._create_widgets")
@@ -79,7 +82,9 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         app.minimal_var = MagicMock()
         app.minimal_var.get.return_value = True
         app.dl_btn = MagicMock()
-        app.dl_status_var = MagicMock()
+        app.start_stop_btn = MagicMock()
+        app.dl_total_status_var = MagicMock()
+        app.dl_file_status_var = MagicMock()
         app._run_download_in_thread = MagicMock()
         app.t = MagicMock(return_value="Starting Model Download")
 
@@ -87,7 +92,8 @@ class TestHayamimiGUIUnit(unittest.TestCase):
             gui.HayamimiGUI._start_download(app)
 
         app.dl_btn.config.assert_called_with(state=gui.tk.DISABLED)
-        app.dl_status_var.set.assert_called_with("Starting Model Download")
+        app.start_stop_btn.config.assert_called_with(state=gui.tk.DISABLED)
+        app.dl_total_status_var.set.assert_called_with("Total Progress: Starting Model Download")
         app._run_download_in_thread.assert_called_once()
 
     @patch("gui.HayamimiGUI._create_widgets")
