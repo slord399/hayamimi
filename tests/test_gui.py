@@ -37,12 +37,10 @@ class TestHayamimiGUIUnit(unittest.TestCase):
             cmd = gui.get_python_cmd()
             self.assertEqual(cmd, sys.executable)
 
-    @patch("shutil.which")
-    def test_get_python_cmd_frozen(self, mock_which):
-        mock_which.return_value = "/usr/bin/python3"
+    def test_get_python_cmd_frozen(self):
         with patch.object(sys, "frozen", True, create=True):
             cmd = gui.get_python_cmd()
-            self.assertEqual(cmd, "/usr/bin/python3")
+            self.assertIsNone(cmd)
 
     @patch("gui.HayamimiGUI._create_widgets")
     @patch("gui.HayamimiGUI._poll_log_queue")
@@ -187,10 +185,8 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         app._run_subprocess = MagicMock()
         app.t = MagicMock(return_value="text")
 
-        gui.HayamimiGUI._start_transcription(app)
-
         expected_cmd = [
-            gui.get_python_cmd(),
+            "/usr/bin/python3",
             gui.TRANSCRIBE_SCRIPT,
             "--input",
             "ws",
@@ -228,9 +224,78 @@ class TestHayamimiGUIUnit(unittest.TestCase):
             "--serve",
         ]
 
+        with patch("gui.get_python_cmd", return_value="/usr/bin/python3"):
+            gui.HayamimiGUI._start_transcription(app)
+
         app._run_subprocess.assert_called_once()
         actual_cmd = app._run_subprocess.call_args[0][0]
         self.assertEqual(actual_cmd, expected_cmd)
+
+    @patch("gui.HayamimiGUI._create_widgets")
+    @patch("gui.HayamimiGUI._poll_log_queue")
+    @patch("gui.HayamimiGUI._refresh_audio_devices")
+    @patch("gui.HayamimiGUI._update_ui_strings")
+    def test_transcription_in_thread_when_frozen(
+        self, mock_update_ui, mock_refresh, mock_poll, mock_widgets
+    ):
+        app = gui.HayamimiGUI.__new__(gui.HayamimiGUI)
+        app.input_mode_map = {"Microphone standard input": "mic"}
+        app.input_dropdown = MagicMock()
+        app.input_dropdown.get.return_value = "Microphone standard input"
+
+        app.mic_var = MagicMock()
+        app.mic_var.get.return_value = "(System Default Input)"
+        app.speaker_var = MagicMock()
+        app.speaker_var.get.return_value = "(System Default Output)"
+
+        app.en_tier_var = MagicMock()
+        app.en_tier_var.get.return_value = "v3"
+        app.punct_var = MagicMock()
+        app.punct_var.get.return_value = "bert"
+        app.threads_var = MagicMock()
+        app.threads_var.get.return_value = "4"
+        app.min_silence_var = MagicMock()
+        app.min_silence_var.get.return_value = "0.35"
+        app.max_speech_var = MagicMock()
+        app.max_speech_var.get.return_value = "12.0"
+        app.max_resident_var = MagicMock()
+        app.max_resident_var.get.return_value = "3"
+
+        app.no_partial_var = MagicMock()
+        app.no_partial_var.get.return_value = False
+        app.no_refine_var = MagicMock()
+        app.no_refine_var.get.return_value = False
+        app.speakers_var = MagicMock()
+        app.speakers_var.get.return_value = False
+
+        app.translate_var = MagicMock()
+        app.translate_var.get.return_value = ""
+        app.hotwords_var = MagicMock()
+        app.hotwords_var.get.return_value = ""
+        app.replace_var = MagicMock()
+        app.replace_var.get.return_value = ""
+        app.mode_var = MagicMock()
+        app.mode_var.get.return_value = "balanced"
+        app.lang_guard_var = MagicMock()
+        app.lang_guard_var.get.return_value = "2.0"
+        app.lid_confirm_var = MagicMock()
+        app.lid_confirm_var.get.return_value = "2"
+
+        app.serve_var = MagicMock()
+        app.serve_var.get.return_value = True
+
+        app.start_stop_btn = MagicMock()
+        app.status_var = MagicMock()
+        app.status_label = MagicMock()
+        app.transcribe_process = None
+        app._log = MagicMock()
+        app._run_transcribe_in_thread = MagicMock()
+        app.t = MagicMock(return_value="text")
+
+        with patch("gui.get_python_cmd", return_value=None):
+            gui.HayamimiGUI._start_transcription(app)
+
+        app._run_transcribe_in_thread.assert_called_once()
 
 
 if __name__ == "__main__":
