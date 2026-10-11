@@ -20,11 +20,22 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 if getattr(sys, "frozen", False):
     ROOT_DIR = getattr(sys, "_MEIPASS", ROOT_DIR)
 
+APP_DIR = os.path.dirname(os.path.abspath(sys.executable)) if getattr(sys, "frozen", False) else ROOT_DIR
+
 LOCALES_DIR = os.path.join(ROOT_DIR, "locales")
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".hayamimi_gui_config.json")
 
-DOWNLOAD_SCRIPT = os.path.join(ROOT_DIR, "scripts", "download_models.py")
-TRANSCRIBE_SCRIPT = os.path.join(ROOT_DIR, "scripts", "realtime_transcribe.py")
+DOWNLOAD_SCRIPT = os.path.abspath(os.path.join(ROOT_DIR, "scripts", "download_models.py"))
+if not os.path.exists(DOWNLOAD_SCRIPT) and getattr(sys, "frozen", False):
+    alt_dl = os.path.abspath(os.path.join(ROOT_DIR, "download_models.py"))
+    if os.path.exists(alt_dl):
+        DOWNLOAD_SCRIPT = alt_dl
+
+TRANSCRIBE_SCRIPT = os.path.abspath(os.path.join(ROOT_DIR, "scripts", "realtime_transcribe.py"))
+if not os.path.exists(TRANSCRIBE_SCRIPT) and getattr(sys, "frozen", False):
+    alt_tr = os.path.abspath(os.path.join(ROOT_DIR, "realtime_transcribe.py"))
+    if os.path.exists(alt_tr):
+        TRANSCRIBE_SCRIPT = alt_tr
 
 
 def get_python_cmd():
@@ -164,11 +175,20 @@ class HayamimiGUI(tk.Tk):
         self.scroll_frame.bind(
             "<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         )
-        self.canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
+        self.canvas_frame_id = self.canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.bind(
+            "<Configure>",
+            lambda e: self.canvas.itemconfig(self.canvas_frame_id, width=e.width)
+        )
 
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.bind_all("<Button-4>", self._on_mousewheel)
+        self.bind_all("<Button-5>", self._on_mousewheel)
 
         top_frame = self.scroll_frame
 
@@ -190,6 +210,15 @@ class HayamimiGUI(tk.Tk):
             command=self._start_download,
         )
         self.dl_btn.pack(side=tk.LEFT)
+
+        self.dl_status_var = tk.StringVar(value="")
+        self.dl_status_lbl = ttk.Label(
+            self.dl_frame,
+            textvariable=self.dl_status_var,
+            font=("Helvetica", 9),
+            foreground="#333333",
+        )
+        self.dl_status_lbl.pack(side=tk.LEFT, padx=(15, 0))
 
         # 2. Audio Input Source & Device Selector
         self.audio_frame = ttk.LabelFrame(top_frame, text="", padding=10)
@@ -545,6 +574,11 @@ class HayamimiGUI(tk.Tk):
     def _run_subprocess(self, cmd: list[str], on_complete=None):
         def reader():
             try:
+                env = os.environ.copy()
+                pythonpath = env.get("PYTHONPATH", "")
+                paths_to_add = [ROOT_DIR, os.path.join(ROOT_DIR, "scripts")]
+                env["PYTHONPATH"] = os.pathsep.join(paths_to_add + ([pythonpath] if pythonpath else []))
+
                 proc = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
@@ -552,7 +586,8 @@ class HayamimiGUI(tk.Tk):
                     text=True,
                     bufsize=1,
                     universal_newlines=True,
-                    cwd=ROOT_DIR,
+                    cwd=APP_DIR,
+                    env=env,
                 )
                 if cmd[1] == DOWNLOAD_SCRIPT:
                     self.download_process = proc
@@ -572,6 +607,53 @@ class HayamimiGUI(tk.Tk):
         thread = threading.Thread(target=reader, daemon=True)
         thread.start()
 
+    def _run_download_subprocess(self, cmd: list[str], on_complete=None):
+        def reader():
+            try:
+                env = os.environ.copy()
+                pythonpath = env.get("PYTHONPATH", "")
+                paths_to_add = [ROOT_DIR, os.path.join(ROOT_DIR, "scripts")]
+                env["PYTHONPATH"] = os.pathsep.join(paths_to_add + ([pythonpath] if pythonpath else []))
+
+                proc = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True,
+                    cwd=APP_DIR,
+                    env=env,
+                )
+                self.download_process = proc
+
+                buffer = ""
+                while True:
+                    ch = proc.stdout.read(1)
+                    if not ch:
+                        break
+                    if ch in ("\r", "\n"):
+                        text = buffer.strip()
+                        if text:
+                            self.after(0, self.dl_status_var.set, text)
+                        buffer = ""
+                    else:
+                        buffer += ch
+                if buffer.strip():
+                    self.after(0, self.dl_status_var.set, buffer.strip())
+
+                proc.wait()
+                if proc.returncode != 0:
+                    self.after(0, self.dl_status_var.set, f"Error (code {proc.returncode})")
+            except Exception as e:
+                self.after(0, self.dl_status_var.set, f"Error: {e}")
+            finally:
+                if on_complete:
+                    self.after(0, on_complete)
+
+        thread = threading.Thread(target=reader, daemon=True)
+        thread.start()
+
     def _start_download(self):
         if self.download_process and self.download_process.poll() is None:
             messagebox.showinfo("In Progress", self.t("model_download.in_progress"))
@@ -582,14 +664,15 @@ class HayamimiGUI(tk.Tk):
             cmd.append("--minimal")
 
         self.dl_btn.config(state=tk.DISABLED)
-        self._log(f"\n>>> {self.t('model_download.started')}: {' '.join(cmd)}\n")
+        self.dl_status_var.set(self.t("model_download.started"))
 
         def complete():
             self.dl_btn.config(state=tk.NORMAL)
             self.download_process = None
-            self._log(f"\n>>> {self.t('model_download.completed')}\n")
+            if not self.dl_status_var.get() or "Error" not in self.dl_status_var.get():
+                self.dl_status_var.set(self.t("model_download.completed"))
 
-        self._run_subprocess(cmd, on_complete=complete)
+        self._run_download_subprocess(cmd, on_complete=complete)
 
     def _toggle_transcription(self):
         if self.transcribe_process and self.transcribe_process.poll() is None:
@@ -703,6 +786,20 @@ class HayamimiGUI(tk.Tk):
         if self.transcribe_process and self.transcribe_process.poll() is None:
             self._log("\n>>> Terminating Transcription Process...\n")
             self.transcribe_process.terminate()
+
+    def _on_mousewheel(self, event):
+        if event.num == 4:
+            self.canvas.yview_scroll(-1, "units")
+        elif event.num == 5:
+            self.canvas.yview_scroll(1, "units")
+        elif event.delta:
+            if sys.platform == "darwin":
+                delta = -1 if event.delta > 0 else 1
+            else:
+                delta = int(-1 * (event.delta / 120))
+                if delta == 0:
+                    delta = -1 if event.delta > 0 else 1
+            self.canvas.yview_scroll(delta, "units")
 
     def _on_close(self):
         if self.transcribe_process and self.transcribe_process.poll() is None:
