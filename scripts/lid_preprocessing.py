@@ -8,7 +8,6 @@ backend's forward pass, so this lives somewhere both sides of the venv split
 can import without dragging in the other side's heavy dependency.
 """
 import numpy as np
-import numpy.typing as npt
 
 LID_MAX_SECONDS = 4.0  # only feed the first N seconds of a segment to the LID model
 
