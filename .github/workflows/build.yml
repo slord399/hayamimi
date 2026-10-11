@@ -2,7 +2,7 @@ name: Multi-Platform Build & Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ] # Runs automatically whenever a PR is merged into main
 
 jobs:
   build:
@@ -36,9 +36,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
-
-      - name: Verify ffmpeg installation
-        run: ffmpeg -version
 
       - name: Install dependencies
         run: |
@@ -83,7 +80,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to create the release and upload assets
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -98,14 +95,17 @@ jobs:
         run: |
           mkdir -p final-release-assets
           find all-artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} final-release-assets/ \;
-          ls -la final-release-assets/
 
-      - name: Publish GitHub Release and Upload Assets
+      - name: Generate Automatic Release Tag Name
+        id: tag_name
+        run: echo "TAG_NAME=v0.1.$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ steps.tag_name.outputs.TAG_NAME }}
           files: |
             final-release-assets/*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
- 
