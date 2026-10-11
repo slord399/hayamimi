@@ -17,8 +17,8 @@ if not hasattr(np, 'ndarray'):
 LID_MAX_SECONDS = 4.0  # only feed the first N seconds of a segment to the LID model
 
 
-def trim_lid_clip(samples: np.ndarray, sample_rate: int,
-                   max_seconds: float = LID_MAX_SECONDS) -> np.ndarray:
+def trim_lid_clip(samples: "np.ndarray", sample_rate: int,
+                   max_seconds: float = LID_MAX_SECONDS) -> "np.ndarray":
     """Preprocessing shared by every LID backend (production whisper-tiny via
     asr_engine.RoutedASR._identify_lang, and every candidate backend in
     scripts/eval_lid_candidates.py and scripts/eval_lid_voxlingua.py): skip
