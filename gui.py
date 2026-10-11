@@ -51,12 +51,9 @@ if not os.path.exists(TRANSCRIBE_SCRIPT) and getattr(sys, "frozen", False):
 def get_python_cmd():
     """Get appropriate Python interpreter command when running from source or frozen executable.
 
-    Returns None if running from a frozen executable where system python is not found.
+    Returns None when running from a frozen executable so that bundled modules run in-process.
     """
     if getattr(sys, "frozen", False):
-        py_path = shutil.which("python") or shutil.which("python3")
-        if py_path and os.path.abspath(py_path) != os.path.abspath(sys.executable):
-            return py_path
         return None
     return sys.executable
 
@@ -138,6 +135,7 @@ class HayamimiGUI(tk.Tk):
         self.minsize(860, 600)
 
         self.transcribe_process = None
+        self.transcribe_stop_event = None
         self.download_process = None
         self.log_queue = queue.Queue()
 
@@ -825,110 +823,177 @@ class HayamimiGUI(tk.Tk):
         else:
             self._start_transcription()
 
+    def _run_transcribe_in_thread(self, args_list: list[str], on_complete=None):
+        def worker():
+            import io
+            import traceback
+
+            class StatusWriter(io.TextIOBase):
+                def __init__(self, gui_obj):
+                    self.gui_obj = gui_obj
+                    self.buffer = ""
+
+                def write(self, s):
+                    for ch in s:
+                        if ch in ("\n", "\r"):
+                            line = self.buffer.strip()
+                            if line:
+                                self.gui_obj._log(line + "\n")
+                            self.buffer = ""
+                        else:
+                            self.buffer += ch
+                    return len(s)
+
+                def flush(self):
+                    if self.buffer.strip():
+                        self.gui_obj._log(self.buffer.strip() + "\n")
+                        self.buffer = ""
+
+            writer = StatusWriter(self)
+            old_stdout, old_stderr = sys.stdout, sys.stderr
+            try:
+                sys.stdout = writer
+                sys.stderr = writer
+
+                try:
+                    import scripts.realtime_transcribe as tr_mod
+                except ImportError:
+                    import realtime_transcribe as tr_mod
+
+                sys_argv_orig = sys.argv
+                try:
+                    sys.argv = [TRANSCRIBE_SCRIPT] + args_list
+                    tr_mod.main(stop_event=self.transcribe_stop_event)
+                finally:
+                    sys.argv = sys_argv_orig
+                writer.flush()
+            except Exception as e:
+                err_msg = f"Error: {e}"
+                tb_str = traceback.format_exc()
+                self._log(f"\n[Transcription Error] {err_msg}\n{tb_str}\n")
+            finally:
+                sys.stdout, sys.stderr = old_stdout, old_stderr
+                if on_complete:
+                    self.after(0, on_complete)
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
     def _start_transcription(self):
         selected_mode_str = self.input_dropdown.get()
         input_flag = self.input_mode_map.get(selected_mode_str, "mic")
 
-        cmd = [get_python_cmd(), TRANSCRIBE_SCRIPT, "--input", input_flag]
+        py_cmd = get_python_cmd()
+        cmd_args = ["--input", input_flag]
 
         # Devices
         mic_dev = self.mic_var.get().strip()
         default_in = self.t("audio_settings.system_default_input")
         if mic_dev and mic_dev != default_in and mic_dev != "(System Default Input)":
-            cmd.extend(["--mic-device", mic_dev])
+            cmd_args.extend(["--mic-device", mic_dev])
 
         speaker_dev = self.speaker_var.get().strip()
         default_out = self.t("audio_settings.system_default_output")
         if speaker_dev and speaker_dev != default_out and speaker_dev != "(System Default Output)":
-            cmd.extend(["--speaker-device", speaker_dev])
+            cmd_args.extend(["--speaker-device", speaker_dev])
 
         # WebSocket settings if input mode is ws
         if input_flag == "ws":
             ws_host = self.ws_host_var.get().strip()
             if ws_host:
-                cmd.extend(["--ws-host", ws_host])
+                cmd_args.extend(["--ws-host", ws_host])
             ws_port = self.ws_port_var.get().strip()
             if ws_port:
-                cmd.extend(["--ws-port", ws_port])
+                cmd_args.extend(["--ws-port", ws_port])
 
         # Pipeline Parameters
         en_tier = self.en_tier_var.get()
         if en_tier:
-            cmd.extend(["--en-tier", en_tier])
+            cmd_args.extend(["--en-tier", en_tier])
 
         punct_model = self.punct_var.get()
         if punct_model:
-            cmd.extend(["--punct-model", punct_model])
+            cmd_args.extend(["--punct-model", punct_model])
 
         threads = self.threads_var.get().strip()
         if threads:
-            cmd.extend(["--threads", threads])
+            cmd_args.extend(["--threads", threads])
 
         min_silence = self.min_silence_var.get().strip()
         if min_silence:
-            cmd.extend(["--min-silence", min_silence])
+            cmd_args.extend(["--min-silence", min_silence])
 
         max_speech = self.max_speech_var.get().strip()
         if max_speech:
-            cmd.extend(["--max-speech", max_speech])
+            cmd_args.extend(["--max-speech", max_speech])
 
         max_resident = self.max_resident_var.get().strip()
         if max_resident:
-            cmd.extend(["--max-resident", max_resident])
+            cmd_args.extend(["--max-resident", max_resident])
 
         # Processing Toggles
         if self.no_partial_var.get():
-            cmd.append("--no-partial")
+            cmd_args.append("--no-partial")
         if self.no_refine_var.get():
-            cmd.append("--no-refine")
+            cmd_args.append("--no-refine")
         if self.speakers_var.get():
-            cmd.append("--speakers")
+            cmd_args.append("--speakers")
 
         # Dictionaries & Language Switching
         translate = self.translate_var.get().strip()
         if translate:
-            cmd.extend(["--translate", translate])
+            cmd_args.extend(["--translate", translate])
 
         hotwords = self.hotwords_var.get().strip()
         if hotwords:
-            cmd.extend(["--hotwords", hotwords])
+            cmd_args.extend(["--hotwords", hotwords])
 
         replace = self.replace_var.get().strip()
         if replace:
-            cmd.extend(["--replace", replace])
+            cmd_args.extend(["--replace", replace])
 
         mode = self.mode_var.get()
         if mode:
-            cmd.extend(["--mode", mode])
+            cmd_args.extend(["--mode", mode])
 
         lang_guard = self.lang_guard_var.get().strip()
         if lang_guard:
-            cmd.extend(["--lang-switch-guard", lang_guard])
+            cmd_args.extend(["--lang-switch-guard", lang_guard])
 
         lid_confirm = self.lid_confirm_var.get().strip()
         if lid_confirm:
-            cmd.extend(["--lid-switch-confirm", lid_confirm])
+            cmd_args.extend(["--lid-switch-confirm", lid_confirm])
 
         # Server
         if self.serve_var.get():
-            cmd.append("--serve")
+            cmd_args.append("--serve")
 
         self.start_stop_btn.config(text=self.t("audio_settings.stop_transcription"))
         self.status_var.set(self.t("audio_settings.status_running"))
         self.status_label.config(foreground="green")
-        self._log(f"\n>>> Launching Transcription: {' '.join(cmd)}\n")
+        self.transcribe_stop_event = threading.Event()
 
         def complete():
             self.start_stop_btn.config(text=self.t("audio_settings.start_transcription"))
             self.status_var.set(self.t("audio_settings.status_stopped"))
             self.status_label.config(foreground="black")
             self.transcribe_process = None
+            self.transcribe_stop_event = None
             self._log("\n>>> Transcription Process Terminated.\n")
 
-        self._run_subprocess(cmd, on_complete=complete)
+        if py_cmd is None or getattr(sys, "frozen", False):
+            self._log(f"\n>>> Launching Transcription (in-thread): {' '.join(cmd_args)}\n")
+            self._run_transcribe_in_thread(cmd_args, on_complete=complete)
+        else:
+            full_cmd = [py_cmd, TRANSCRIBE_SCRIPT] + cmd_args
+            self._log(f"\n>>> Launching Transcription: {' '.join(full_cmd)}\n")
+            self._run_subprocess(full_cmd, on_complete=complete)
 
     def _stop_transcription(self):
-        if self.transcribe_process and self.transcribe_process.poll() is None:
+        if self.transcribe_stop_event is not None:
+            self._log("\n>>> Terminating Transcription Thread...\n")
+            self.transcribe_stop_event.set()
+        elif self.transcribe_process and self.transcribe_process.poll() is None:
             self._log("\n>>> Terminating Transcription Process...\n")
             self.transcribe_process.terminate()
 
@@ -947,7 +1012,9 @@ class HayamimiGUI(tk.Tk):
             self.canvas.yview_scroll(delta, "units")
 
     def _on_close(self):
-        if self.transcribe_process and self.transcribe_process.poll() is None:
+        if self.transcribe_stop_event is not None:
+            self.transcribe_stop_event.set()
+        elif self.transcribe_process and self.transcribe_process.poll() is None:
             self.transcribe_process.terminate()
         if self.download_process and self.download_process.poll() is None:
             self.download_process.terminate()

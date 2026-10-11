@@ -2159,7 +2159,7 @@ def reset_live_session(asr: "RoutedASR | None", refiner: "Refiner | None",
         hub.publish({"type": "session_reset"})
 
 
-def main():
+def main(stop_event: "threading.Event | None" = None):
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
     ap.add_argument("--wav", help="wav file to simulate streaming from (16kHz mono s16)")
@@ -2546,7 +2546,8 @@ def main():
     # handler, purely so the two cancellation paths converge on the same
     # state (run_stream has usually already unwound via the exception by
     # the time this runs).
-    stop_event = threading.Event()
+    if stop_event is None:
+        stop_event = threading.Event()
 
     try:
         hub.publish({"type": "session_start"})
