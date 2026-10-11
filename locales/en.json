@@ -7,7 +7,14 @@
     "download_btn": "Download Models",
     "in_progress": "Model download is already running.",
     "started": "Starting Model Download",
-    "completed": "Model Download Process Completed."
+    "completed": "Model Download Process Completed.",
+    "total_progress_idle": "Total Progress: Idle",
+    "current_file_ready": "Current File: Ready",
+    "current_file_starting": "Current File: Starting...",
+    "current_file_completed": "Current File: Completed",
+    "total_progress_header": "Total Progress",
+    "current_file_header": "Current File",
+    "current_file_init": "Current File: Initializing..."
   },
   "audio_settings": {
     "frame_title": "Audio Input Source & Device Selector",

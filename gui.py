@@ -237,7 +237,7 @@ class HayamimiGUI(tk.Tk):
         status_subframe = ttk.Frame(self.dl_frame)
         status_subframe.pack(side=tk.LEFT, padx=(15, 0), fill=tk.Y)
 
-        self.dl_total_status_var = tk.StringVar(value="Total Progress: Idle")
+        self.dl_total_status_var = tk.StringVar(value=self.t("model_download.total_progress_idle", default="Total Progress: Idle"))
         self.dl_total_status_lbl = ttk.Label(
             status_subframe,
             textvariable=self.dl_total_status_var,
@@ -246,7 +246,7 @@ class HayamimiGUI(tk.Tk):
         )
         self.dl_total_status_lbl.pack(anchor=tk.W)
 
-        self.dl_file_status_var = tk.StringVar(value="Current File: Ready")
+        self.dl_file_status_var = tk.StringVar(value=self.t("model_download.current_file_ready", default="Current File: Ready"))
         self.dl_file_status_lbl = ttk.Label(
             status_subframe,
             textvariable=self.dl_file_status_var,
@@ -464,11 +464,11 @@ class HayamimiGUI(tk.Tk):
 
         for url, desc_key in addresses:
             row = ttk.Frame(self.urls_subframe)
-            row.pack(fill=tk.X, pady=2)
-            url_lbl = ttk.Label(row, text=url, font=("Courier", 9, "bold"), foreground="#0066cc", width=30)
-            url_lbl.pack(side=tk.LEFT, anchor=tk.W)
-            desc_lbl = ttk.Label(row, text="", font=("Helvetica", 9))
-            desc_lbl.pack(side=tk.LEFT, anchor=tk.W)
+            row.pack(fill=tk.X, pady=4)
+            url_lbl = ttk.Label(row, text=url, font=("Courier", 9, "bold"), foreground="#0066cc")
+            url_lbl.pack(side=tk.LEFT, anchor=tk.W, padx=(0, 10))
+            desc_lbl = ttk.Label(row, text="", font=("Helvetica", 9), wraplength=450, justify=tk.LEFT)
+            desc_lbl.pack(side=tk.LEFT, anchor=tk.W, fill=tk.X, expand=True)
             self.address_widgets.append((desc_lbl, desc_key))
 
         # 7. Output Console / Log Area
@@ -655,24 +655,27 @@ class HayamimiGUI(tk.Tk):
     def _parse_download_line(self, line: str, is_minimal: bool):
         if not hasattr(self, "_dl_model_count"):
             self._dl_model_count = 0
-            self._dl_total_models = 4 if is_minimal else 10
+            self._dl_total_models = 4 if is_minimal else 12
 
         if line.startswith("[get ]") or line.startswith("[skip]"):
             self._dl_model_count += 1
             pct = min(100, int((self._dl_model_count / self._dl_total_models) * 100))
             label = line[6:].strip()
+            tot_hdr = self.t("model_download.total_progress_header", default="Total Progress")
+            cur_file_init = self.t("model_download.current_file_init", default="Current File: Initializing...")
             self.dl_total_status_var.set(
-                f"Total Progress: Model {self._dl_model_count}/{self._dl_total_models} - {label} ({pct}%)"
+                f"{tot_hdr}: Model {self._dl_model_count}/{self._dl_total_models} - {label} ({pct}%)"
             )
-            self.dl_file_status_var.set("Current File: Initializing...")
+            self.dl_file_status_var.set(cur_file_init)
         elif "%" in line:
-            self.dl_file_status_var.set(f"Current File: {line}")
+            cur_hdr = self.t("model_download.current_file_header", default="Current File")
+            self.dl_file_status_var.set(f"{cur_hdr}: {line}")
 
     def _run_download_subprocess(self, cmd: list[str], on_complete=None):
         def reader():
             try:
                 self._dl_model_count = 0
-                self._dl_total_models = 4 if "--minimal" in cmd else 10
+                self._dl_total_models = 4 if "--minimal" in cmd else 12
                 env = self._get_subprocess_env()
 
                 proc = subprocess.Popen(
@@ -757,7 +760,7 @@ class HayamimiGUI(tk.Tk):
                         self.buffer = ""
 
             self._dl_model_count = 0
-            self._dl_total_models = 4 if minimal else 10
+            self._dl_total_models = 4 if minimal else 12
             writer = StatusWriter(self, minimal)
             old_stdout, old_stderr = sys.stdout, sys.stderr
             try:
@@ -800,8 +803,12 @@ class HayamimiGUI(tk.Tk):
 
         self.dl_btn.config(state=tk.DISABLED)
         self.start_stop_btn.config(state=tk.DISABLED)
-        self.dl_total_status_var.set("Total Progress: " + self.t("model_download.started"))
-        self.dl_file_status_var.set("Current File: Starting...")
+        tot_hdr = self.t("model_download.total_progress_header", default="Total Progress")
+        cur_file_start = self.t("model_download.current_file_starting", default="Current File: Starting...")
+        cur_file_comp = self.t("model_download.current_file_completed", default="Current File: Completed")
+
+        self.dl_total_status_var.set(f"{tot_hdr}: " + self.t("model_download.started"))
+        self.dl_file_status_var.set(cur_file_start)
 
         def complete():
             self.dl_btn.config(state=tk.NORMAL)
@@ -809,8 +816,8 @@ class HayamimiGUI(tk.Tk):
             self.download_process = None
             cur_status = self.dl_total_status_var.get()
             if not cur_status or ("Error" not in cur_status and "code" not in cur_status):
-                self.dl_total_status_var.set("Total Progress: " + self.t("model_download.completed"))
-                self.dl_file_status_var.set("Current File: Completed")
+                self.dl_total_status_var.set(f"{tot_hdr}: " + self.t("model_download.completed"))
+                self.dl_file_status_var.set(cur_file_comp)
 
         if py_cmd is None or getattr(sys, "frozen", False):
             self._run_download_in_thread(self.minimal_var.get(), on_complete=complete)
@@ -821,7 +828,7 @@ class HayamimiGUI(tk.Tk):
             self._run_download_subprocess(cmd, on_complete=complete)
 
     def _toggle_transcription(self):
-        if self.transcribe_process and self.transcribe_process.poll() is None:
+        if self.transcribe_stop_event is not None or (self.transcribe_process and self.transcribe_process.poll() is None):
             self._stop_transcription()
         else:
             self._start_transcription()
