@@ -64,13 +64,13 @@ jobs:
           mkdir -p dist/package
           if [ "${{ runner.os }}" = "Windows" ]; then
             cp -r dist/hayamimi-gui/* dist/package/
-            cd dist && zip -r hayamimi-windows-x64.zip package/
+            python -c "import shutil; shutil.make_archive('dist/hayamimi-windows-x64', 'zip', 'dist/package')"
           elif [ "${{ runner.os }}" = "macOS" ]; then
             cp -r dist/hayamimi-gui.app dist/package/ || cp -r dist/hayamimi-gui/* dist/package/
-            cd dist && zip -r hayamimi-macos-x64.zip package/
+            python -c "import shutil; shutil.make_archive('dist/hayamimi-macos-x64', 'zip', 'dist/package')"
           else
             cp -r dist/hayamimi-gui/* dist/package/
-            cd dist && tar -czvf hayamimi-linux-x64.tar.gz package/
+            python -c "import shutil; shutil.make_archive('dist/hayamimi-linux-x64', 'gztar', 'dist/package')"
           fi
 
       - name: Upload build artifacts
