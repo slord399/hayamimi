@@ -1,0 +1,68 @@
+{
+  "app_title": "hayamimi (早耳) 제어판",
+  "language_selector": "GUI 언어:",
+  "model_download": {
+    "frame_title": "언어 모델 다운로드",
+    "minimal_check": "최소 구성 (--minimal: 약 1.1GB 일본어/영어 구성)",
+    "download_btn": "모델 다운로드",
+    "in_progress": "모델 다운로드가 이미 실행 중입니다.",
+    "started": "모델 다운로드 시작 중",
+    "completed": "모델 다운로드 프로세스가 완료되었습니다."
+  },
+  "audio_settings": {
+    "frame_title": "오디오 입력 소스 및 장치 선택",
+    "input_mode": "입력 소스 모드:",
+    "mic_input": "마이크 표준 입력",
+    "speaker_input": "PC 내부 스피커 입력 (Windows)",
+    "mix_input": "마이크 + 스피커 혼합 입력",
+    "ws_input": "WebSocket 오디오 네트워크 입력",
+    "refresh_btn": "장치 새로고침",
+    "start_transcription": "음성 인식 시작",
+    "stop_transcription": "음성 인식 중지",
+    "status_stopped": "상태: 중지됨",
+    "status_running": "상태: 실행 중",
+    "mic_device": "마이크 장치:",
+    "speaker_device": "스피커 장치:",
+    "device_hint": "(장치 이름 또는 부분 문자열 선택/입력)",
+    "system_default_input": "(시스템 기본 입력)",
+    "system_default_output": "(시스템 기본 출력)",
+    "ws_host": "WebSocket 호스트:",
+    "ws_port": "WebSocket 포트:"
+  },
+  "pipeline_settings": {
+    "frame_title": "파이프라인 고급 매개변수",
+    "en_tier": "영어 모델 계층:",
+    "punct_model": "일본어 문장 부호 모델:",
+    "threads": "추론 스레드 수 (N):",
+    "min_silence": "최소 침묵 시간 (초):",
+    "max_speech": "최대 음성 시간 (초):",
+    "max_resident": "최대 상주 모델 수:"
+  },
+  "toggles": {
+    "frame_title": "처리 옵션",
+    "no_partial": "실시간 임시 자막 비활성화 (--no-partial)",
+    "no_refine": "2차 재디코딩 다듬기 비활성화 (--no-refine)",
+    "speakers": "화자 식별 활성화 (--speakers)"
+  },
+  "lang_switching": {
+    "frame_title": "사전 설정 및 언어 전환",
+    "translate": "번역 대상 언어:",
+    "translate_hint": "(쉼표로 구분, 예: en,zh,ko)",
+    "hotwords": "핫워드 파일:",
+    "replace": "사용자 치환 사전 파일:",
+    "mode": "언어 전환 모드:",
+    "lang_guard": "전환 보호 시간 (초):",
+    "lid_confirm": "LID 감지 확인 횟수:",
+    "browse": "찾아보기..."
+  },
+  "server_settings": {
+    "frame_title": "선택적 로컬 서버 설정",
+    "enable_server": "로컬 서버 활성화 (--serve)",
+    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
+    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
+    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+  },
+  "console": {
+    "frame_title": "콘솔 출력"
+  }
+}

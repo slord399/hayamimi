@@ -1,0 +1,68 @@
+{
+  "app_title": "hayamimi (早耳) Control Panel",
+  "language_selector": "GUI Language:",
+  "model_download": {
+    "frame_title": "Language Model Download",
+    "minimal_check": "Minimal config (--minimal: ~1.1GB Japanese/English configuration)",
+    "download_btn": "Download Models",
+    "in_progress": "Model download is already running.",
+    "started": "Starting Model Download",
+    "completed": "Model Download Process Completed."
+  },
+  "audio_settings": {
+    "frame_title": "Audio Input Source & Device Selector",
+    "input_mode": "Input Source Mode:",
+    "mic_input": "Microphone standard input",
+    "speaker_input": "PC internal speaker input (Windows)",
+    "mix_input": "Microphone + Speaker mix",
+    "ws_input": "WebSocket audio network input",
+    "refresh_btn": "Refresh Devices",
+    "start_transcription": "Start Transcription",
+    "stop_transcription": "Stop Transcription",
+    "status_stopped": "Status: Stopped",
+    "status_running": "Status: Running",
+    "mic_device": "Microphone Device(s):",
+    "speaker_device": "Speaker Device:",
+    "device_hint": "(Select or type device name/substring)",
+    "system_default_input": "(System Default Input)",
+    "system_default_output": "(System Default Output)",
+    "ws_host": "WebSocket Host:",
+    "ws_port": "WebSocket Port:"
+  },
+  "pipeline_settings": {
+    "frame_title": "Pipeline Parameters & Options",
+    "en_tier": "English Tier:",
+    "punct_model": "Japanese Punctuation Model:",
+    "threads": "Threads (N):",
+    "min_silence": "Min Silence (sec):",
+    "max_speech": "Max Speech (sec):",
+    "max_resident": "Max Resident Models:"
+  },
+  "toggles": {
+    "frame_title": "Processing Options",
+    "no_partial": "Disable Draft Subtitles (--no-partial)",
+    "no_refine": "Disable Refine Re-decode (--no-refine)",
+    "speakers": "Enable Speaker Labeling (--speakers)"
+  },
+  "lang_switching": {
+    "frame_title": "Dictionaries & Language Switching",
+    "translate": "Translate Languages:",
+    "translate_hint": "(comma-separated, e.g. en,zh,ko)",
+    "hotwords": "Hotwords File:",
+    "replace": "User Dict File:",
+    "mode": "Language Mode:",
+    "lang_guard": "Switch Guard (sec):",
+    "lid_confirm": "LID Switch Confirm (hits):",
+    "browse": "Browse..."
+  },
+  "server_settings": {
+    "frame_title": "Optional Local Server Settings",
+    "enable_server": "Enable Local Server (--serve)",
+    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
+    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
+    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+  },
+  "console": {
+    "frame_title": "Console Output"
+  }
+}

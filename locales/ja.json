@@ -1,0 +1,68 @@
+{
+  "app_title": "hayamimi (早耳) コントロールパネル",
+  "language_selector": "GUI言語:",
+  "model_download": {
+    "frame_title": "言語モデルのダウンロード",
+    "minimal_check": "軽量構成 (--minimal: 約1.1GB 日本語/英語構成)",
+    "download_btn": "モデルをダウンロード",
+    "in_progress": "モデルのダウンロードは既に実行中です。",
+    "started": "モデルダウンロードを開始中",
+    "completed": "モデルダウンロード処理が完了しました。"
+  },
+  "audio_settings": {
+    "frame_title": "音声入力ソース＆デバイス選択",
+    "input_mode": "入力ソースモード:",
+    "mic_input": "マイク標準入力",
+    "speaker_input": "PC内部スピーカー入力 (Windows)",
+    "mix_input": "マイク + スピーカー混合入力",
+    "ws_input": "WebSocket音声ネットワーク入力",
+    "refresh_btn": "デバイス再読み込み",
+    "start_transcription": "文字起こし開始",
+    "stop_transcription": "文字起こし停止",
+    "status_stopped": "状態: 停止中",
+    "status_running": "状態: 実行中",
+    "mic_device": "マイクデバイス:",
+    "speaker_device": "スピーカーデバイス:",
+    "device_hint": "(デバイス名または部分文字列を選択/入力)",
+    "system_default_input": "(システム標準入力)",
+    "system_default_output": "(システム標準出力)",
+    "ws_host": "WebSocket ホスト:",
+    "ws_port": "WebSocket ポート:"
+  },
+  "pipeline_settings": {
+    "frame_title": "パイプライン詳細パラメータ",
+    "en_tier": "英語モデル階層:",
+    "punct_model": "日本語句読点モデル:",
+    "threads": "推論スレッド数 (N):",
+    "min_silence": "最小無音時間 (秒):",
+    "max_speech": "最大音声時間 (秒):",
+    "max_resident": "最大常駐モデル数:"
+  },
+  "toggles": {
+    "frame_title": "処理オプション",
+    "no_partial": "仮字幕を無効化 (--no-partial)",
+    "no_refine": "二段階清書を無効化 (--no-refine)",
+    "speakers": "話者識別を有効化 (--speakers)"
+  },
+  "lang_switching": {
+    "frame_title": "辞書設定・言語切り替え",
+    "translate": "翻訳対象言語:",
+    "translate_hint": "(カンマ区切り, 例: en,zh,ko)",
+    "hotwords": "ホットワードファイル:",
+    "replace": "ユーザー置換辞書ファイル:",
+    "mode": "言語切り替えモード:",
+    "lang_guard": "切り替えガード (秒):",
+    "lid_confirm": "LID確認回数 (回):",
+    "browse": "参照..."
+  },
+  "server_settings": {
+    "frame_title": "ローカルサーバー設定 (任意)",
+    "enable_server": "ローカルサーバーを有効化 (--serve)",
+    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
+    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
+    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+  },
+  "console": {
+    "frame_title": "コンソール出力"
+  }
+}

@@ -51,12 +51,12 @@ jobs:
       - name: Build executable with PyInstaller (Windows)
         if: runner.os == 'Windows'
         run: |
-          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts;scripts" gui.py
+          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts;scripts" --add-data "locales;locales" gui.py
 
       - name: Build executable with PyInstaller (macOS / Linux)
         if: runner.os != 'Windows'
         run: |
-          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts:scripts" gui.py
+          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts:scripts" --add-data "locales:locales" gui.py
 
       - name: Create release package artifact
         shell: bash

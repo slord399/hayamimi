@@ -1,0 +1,68 @@
+{
+  "app_title": "hayamimi (早耳) 控制面板",
+  "language_selector": "界面語言:",
+  "model_download": {
+    "frame_title": "語言模型下載",
+    "minimal_check": "輕量配置 (--minimal: ~1.1GB 日語/英語配置)",
+    "download_btn": "下載模型",
+    "in_progress": "模型下載已經運行緊。",
+    "started": "開始下載模型",
+    "completed": "模型下載程序已完成。"
+  },
+  "audio_settings": {
+    "frame_title": "音訊輸入源同設備選擇",
+    "input_mode": "輸入源模式:",
+    "mic_input": "麥克風標準輸入",
+    "speaker_input": "PC內部喇叭輸入 (Windows)",
+    "mix_input": "麥克風 + 喇叭混合輸入",
+    "ws_input": "WebSocket網絡音訊輸入",
+    "refresh_btn": "重新整理設備",
+    "start_transcription": "開始轉寫",
+    "stop_transcription": "停止轉寫",
+    "status_stopped": "狀態: 已停止",
+    "status_running": "狀態: 運行中",
+    "mic_device": "麥克風設備:",
+    "speaker_device": "喇叭設備:",
+    "device_hint": "(選擇或輸入設備名稱/子字串)",
+    "system_default_input": "(系統預設輸入)",
+    "system_default_output": "(系統預設輸出)",
+    "ws_host": "WebSocket 主機:",
+    "ws_port": "WebSocket 端口:"
+  },
+  "pipeline_settings": {
+    "frame_title": "管道高級參數",
+    "en_tier": "英語模型層級:",
+    "punct_model": "日語標點模型:",
+    "threads": "推理線程數 (N):",
+    "min_silence": "最小靜音時間 (秒):",
+    "max_speech": "最大語音時間 (秒):",
+    "max_resident": "最大常駐模型數:"
+  },
+  "toggles": {
+    "frame_title": "處理選項",
+    "no_partial": "停用即時草稿字幕 (--no-partial)",
+    "no_refine": "停用二次精煉重解碼 (--no-refine)",
+    "speakers": "啟用說話人識別 (--speakers)"
+  },
+  "lang_switching": {
+    "frame_title": "詞典設定同語言切換",
+    "translate": "翻譯目標語言:",
+    "translate_hint": "(逗號分隔, 例如 en,zh,ko)",
+    "hotwords": "熱詞檔案:",
+    "replace": "用戶替換詞典檔案:",
+    "mode": "語言切換模式:",
+    "lang_guard": "切換保護時間 (秒):",
+    "lid_confirm": "LID確認次數 (次):",
+    "browse": "瀏覽..."
+  },
+  "server_settings": {
+    "frame_title": "可選本地伺服器設定",
+    "enable_server": "啟用本地伺服器 (--serve)",
+    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
+    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
+    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+  },
+  "console": {
+    "frame_title": "控制台輸出"
+  }
+}
