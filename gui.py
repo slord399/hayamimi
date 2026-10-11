@@ -10,12 +10,26 @@ import sys
 import subprocess
 import threading
 import queue
+import shutil
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    # PyInstaller extract directory
+    ROOT_DIR = getattr(sys, '_MEIPASS', ROOT_DIR)
+
 DOWNLOAD_SCRIPT = os.path.join(ROOT_DIR, "scripts", "download_models.py")
 TRANSCRIBE_SCRIPT = os.path.join(ROOT_DIR, "scripts", "realtime_transcribe.py")
+
+
+def get_python_cmd():
+    """Get appropriate Python interpreter command when running from source or frozen executable."""
+    if getattr(sys, 'frozen', False):
+        py_path = shutil.which("python") or shutil.which("python3")
+        if py_path:
+            return py_path
+    return sys.executable
 
 
 def enumerate_audio_devices():
@@ -243,7 +257,7 @@ class HayamimiGUI(tk.Tk):
             messagebox.showinfo("In Progress", "Model download is already running.")
             return
 
-        cmd = [sys.executable, DOWNLOAD_SCRIPT]
+        cmd = [get_python_cmd(), DOWNLOAD_SCRIPT]
         if self.minimal_var.get():
             cmd.append("--minimal")
 
@@ -267,7 +281,7 @@ class HayamimiGUI(tk.Tk):
         input_key = self.input_var.get()
         input_flag = self.input_options.get(input_key, "mic")
 
-        cmd = [sys.executable, TRANSCRIBE_SCRIPT, "--input", input_flag]
+        cmd = [get_python_cmd(), TRANSCRIBE_SCRIPT, "--input", input_flag]
 
         # Pass mic device if selected
         mic_dev = self.mic_var.get().strip()

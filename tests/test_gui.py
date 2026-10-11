@@ -22,6 +22,18 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         for label, code in expected_mappings.items():
             self.assertIn(label, expected_mappings)
 
+    def test_get_python_cmd_unfrozen(self):
+        with patch.object(sys, "frozen", False, create=True):
+            cmd = gui.get_python_cmd()
+            self.assertEqual(cmd, sys.executable)
+
+    @patch("shutil.which")
+    def test_get_python_cmd_frozen(self, mock_which):
+        mock_which.return_value = "/usr/bin/python3"
+        with patch.object(sys, "frozen", True, create=True):
+            cmd = gui.get_python_cmd()
+            self.assertEqual(cmd, "/usr/bin/python3")
+
     @patch("gui.enumerate_audio_devices")
     def test_enumerate_audio_devices_mock(self, mock_enum):
         mock_enum.return_value = (["(System Default Input)", "Mic 1"], ["(System Default Output)", "Speaker 1"])
@@ -60,7 +72,7 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         gui.HayamimiGUI._start_transcription(app)
 
         expected_cmd_1 = [
-            sys.executable,
+            gui.get_python_cmd(),
             gui.TRANSCRIBE_SCRIPT,
             "--input",
             "mic",
@@ -81,7 +93,7 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         gui.HayamimiGUI._start_transcription(app)
 
         expected_cmd_2 = [
-            sys.executable,
+            gui.get_python_cmd(),
             gui.TRANSCRIBE_SCRIPT,
             "--input",
             "mix",
@@ -108,7 +120,7 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         # Minimal true
         app.minimal_var.get.return_value = True
         gui.HayamimiGUI._start_download(app)
-        expected_cmd_1 = [sys.executable, gui.DOWNLOAD_SCRIPT, "--minimal"]
+        expected_cmd_1 = [gui.get_python_cmd(), gui.DOWNLOAD_SCRIPT, "--minimal"]
         actual_cmd_1 = app._run_subprocess.call_args[0][0]
         self.assertEqual(actual_cmd_1, expected_cmd_1)
 
@@ -116,7 +128,7 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         app._run_subprocess.reset_mock()
         app.minimal_var.get.return_value = False
         gui.HayamimiGUI._start_download(app)
-        expected_cmd_2 = [sys.executable, gui.DOWNLOAD_SCRIPT]
+        expected_cmd_2 = [gui.get_python_cmd(), gui.DOWNLOAD_SCRIPT]
         actual_cmd_2 = app._run_subprocess.call_args[0][0]
         self.assertEqual(actual_cmd_2, expected_cmd_2)
 
