@@ -611,13 +611,20 @@ class HayamimiGUI(tk.Tk):
             self.log_text.see(tk.END)
         self.after(100, self._poll_log_queue)
 
+    def _get_subprocess_env(self):
+        env = os.environ.copy()
+        base_path = getattr(sys, "_MEIPASS", ROOT_DIR)
+        paths_to_add = [base_path, os.path.join(base_path, "scripts")]
+        pythonpath = env.get("PYTHONPATH", "")
+        if pythonpath:
+            paths_to_add.append(pythonpath)
+        env["PYTHONPATH"] = os.path.pathsep.join(paths_to_add)
+        return env
+
     def _run_subprocess(self, cmd: list[str], on_complete=None):
         def reader():
             try:
-                env = os.environ.copy()
-                pythonpath = env.get("PYTHONPATH", "")
-                paths_to_add = [ROOT_DIR, os.path.join(ROOT_DIR, "scripts")]
-                env["PYTHONPATH"] = os.pathsep.join(paths_to_add + ([pythonpath] if pythonpath else []))
+                env = self._get_subprocess_env()
 
                 proc = subprocess.Popen(
                     cmd,
@@ -668,10 +675,7 @@ class HayamimiGUI(tk.Tk):
             try:
                 self._dl_model_count = 0
                 self._dl_total_models = 4 if "--minimal" in cmd else 10
-                env = os.environ.copy()
-                pythonpath = env.get("PYTHONPATH", "")
-                paths_to_add = [ROOT_DIR, os.path.join(ROOT_DIR, "scripts")]
-                env["PYTHONPATH"] = os.pathsep.join(paths_to_add + ([pythonpath] if pythonpath else []))
+                env = self._get_subprocess_env()
 
                 proc = subprocess.Popen(
                     cmd,
