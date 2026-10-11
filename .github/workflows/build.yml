@@ -46,12 +46,12 @@ jobs:
       - name: Build executable with PyInstaller (Windows)
         if: runner.os == 'Windows'
         run: |
-          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts;scripts" --add-data "locales;locales" gui.py
+          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts;scripts" --add-data "locales;locales" --hidden-import huggingface_hub --hidden-import sherpa_onnx --hidden-import tqdm --hidden-import urllib3 --hidden-import requests gui.py
 
       - name: Build executable with PyInstaller (macOS / Linux)
         if: runner.os != 'Windows'
         run: |
-          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts:scripts" --add-data "locales:locales" gui.py
+          pyinstaller --noconfirm --onedir --windowed --name hayamimi-gui --add-data "scripts:scripts" --add-data "locales:locales" --hidden-import huggingface_hub --hidden-import sherpa_onnx --hidden-import tqdm --hidden-import urllib3 --hidden-import requests gui.py
 
       - name: Create release package artifact
         shell: bash

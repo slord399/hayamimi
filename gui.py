@@ -1,3 +1,8 @@
+# Credits & License
+# Original Author: oboroge0 (Hayamimi - Real-time multilingual speech-to-text on CPU)
+# Repository: https://github.com/oboroge0/hayamimi
+# License: MIT License
+
 """hayamimi GUI Control Panel.
 
 Provides a graphical control panel layout to download models, select audio input (including WebSocket),
@@ -39,11 +44,15 @@ if not os.path.exists(TRANSCRIBE_SCRIPT) and getattr(sys, "frozen", False):
 
 
 def get_python_cmd():
-    """Get appropriate Python interpreter command when running from source or frozen executable."""
+    """Get appropriate Python interpreter command when running from source or frozen executable.
+
+    Returns None if running from a frozen executable where system python is not found.
+    """
     if getattr(sys, "frozen", False):
         py_path = shutil.which("python") or shutil.which("python3")
-        if py_path:
+        if py_path and os.path.abspath(py_path) != os.path.abspath(sys.executable):
             return py_path
+        return None
     return sys.executable
 
 
@@ -636,17 +645,24 @@ class HayamimiGUI(tk.Tk):
                         text = buffer.strip()
                         if text:
                             self.after(0, self.dl_status_var.set, text)
+                            self._log(text + "\n")
                         buffer = ""
                     else:
                         buffer += ch
                 if buffer.strip():
-                    self.after(0, self.dl_status_var.set, buffer.strip())
+                    text = buffer.strip()
+                    self.after(0, self.dl_status_var.set, text)
+                    self._log(text + "\n")
 
                 proc.wait()
                 if proc.returncode != 0:
-                    self.after(0, self.dl_status_var.set, f"Error (code {proc.returncode})")
+                    err_msg = f"Error (code {proc.returncode})"
+                    self.after(0, self.dl_status_var.set, err_msg)
+                    self._log(f"\n[Model Download Process Error] Download subprocess exited with code {proc.returncode}\n")
             except Exception as e:
-                self.after(0, self.dl_status_var.set, f"Error: {e}")
+                err_msg = f"Error: {e}"
+                self.after(0, self.dl_status_var.set, err_msg)
+                self._log(f"\n[Model Download Exception] {e}\n")
             finally:
                 if on_complete:
                     self.after(0, on_complete)
@@ -654,14 +670,73 @@ class HayamimiGUI(tk.Tk):
         thread = threading.Thread(target=reader, daemon=True)
         thread.start()
 
+    def _run_download_in_thread(self, minimal: bool, on_complete=None):
+        def worker():
+            import io
+            import traceback
+
+            class StatusWriter(io.TextIOBase):
+                def __init__(self, gui_obj):
+                    self.gui_obj = gui_obj
+                    self.buffer = ""
+
+                def write(self, s):
+                    for ch in s:
+                        if ch in ("\r", "\n"):
+                            line = self.buffer.strip()
+                            if line:
+                                self.gui_obj.after(0, self.gui_obj.dl_status_var.set, line)
+                                self.gui_obj._log(line + "\n")
+                            self.buffer = ""
+                        else:
+                            self.buffer += ch
+                    return len(s)
+
+                def flush(self):
+                    if self.buffer.strip():
+                        line = self.buffer.strip()
+                        self.gui_obj.after(0, self.gui_obj.dl_status_var.set, line)
+                        self.gui_obj._log(line + "\n")
+                        self.buffer = ""
+
+            writer = StatusWriter(self)
+            old_stdout, old_stderr = sys.stdout, sys.stderr
+            try:
+                sys.stdout = writer
+                sys.stderr = writer
+
+                try:
+                    import scripts.download_models as dl_mod
+                except ImportError:
+                    import download_models as dl_mod
+
+                args_list = ["--minimal"] if minimal else []
+                sys_argv_orig = sys.argv
+                try:
+                    sys.argv = [DOWNLOAD_SCRIPT] + args_list
+                    dl_mod.main()
+                finally:
+                    sys.argv = sys_argv_orig
+                writer.flush()
+            except Exception as e:
+                err_msg = f"Error: {e}"
+                tb_str = traceback.format_exc()
+                self.after(0, self.dl_status_var.set, err_msg)
+                self._log(f"\n[Model Download Error] {err_msg}\n{tb_str}\n")
+            finally:
+                sys.stdout, sys.stderr = old_stdout, old_stderr
+                if on_complete:
+                    self.after(0, on_complete)
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
     def _start_download(self):
         if self.download_process and self.download_process.poll() is None:
             messagebox.showinfo("In Progress", self.t("model_download.in_progress"))
             return
 
-        cmd = [get_python_cmd(), DOWNLOAD_SCRIPT]
-        if self.minimal_var.get():
-            cmd.append("--minimal")
+        py_cmd = get_python_cmd()
 
         self.dl_btn.config(state=tk.DISABLED)
         self.dl_status_var.set(self.t("model_download.started"))
@@ -669,10 +744,17 @@ class HayamimiGUI(tk.Tk):
         def complete():
             self.dl_btn.config(state=tk.NORMAL)
             self.download_process = None
-            if not self.dl_status_var.get() or "Error" not in self.dl_status_var.get():
+            cur_status = self.dl_status_var.get()
+            if not cur_status or ("Error" not in cur_status and "code" not in cur_status):
                 self.dl_status_var.set(self.t("model_download.completed"))
 
-        self._run_download_subprocess(cmd, on_complete=complete)
+        if py_cmd is None or getattr(sys, "frozen", False):
+            self._run_download_in_thread(self.minimal_var.get(), on_complete=complete)
+        else:
+            cmd = [py_cmd, DOWNLOAD_SCRIPT]
+            if self.minimal_var.get():
+                cmd.append("--minimal")
+            self._run_download_subprocess(cmd, on_complete=complete)
 
     def _toggle_transcription(self):
         if self.transcribe_process and self.transcribe_process.poll() is None:
