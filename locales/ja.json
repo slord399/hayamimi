@@ -7,7 +7,14 @@
     "download_btn": "モデルをダウンロード",
     "in_progress": "モデルのダウンロードは既に実行中です。",
     "started": "モデルダウンロードを開始中",
-    "completed": "モデルダウンロード処理が完了しました。"
+    "completed": "モデルダウンロード処理が完了しました。",
+    "total_progress_idle": "全体進捗: 待機中",
+    "current_file_ready": "現在のファイル: 準備完了",
+    "current_file_starting": "現在のファイル: 開始中...",
+    "current_file_completed": "現在のファイル: 完了",
+    "total_progress_header": "全体進捗",
+    "current_file_header": "現在のファイル",
+    "current_file_init": "現在のファイル: 初期化中..."
   },
   "audio_settings": {
     "frame_title": "音声入力ソース＆デバイス選択",
