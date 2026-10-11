@@ -24,6 +24,11 @@ from tkinter import filedialog, messagebox, ttk, scrolledtext
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 if getattr(sys, "frozen", False):
     ROOT_DIR = getattr(sys, "_MEIPASS", ROOT_DIR)
+    if ROOT_DIR not in sys.path:
+        sys.path.insert(0, ROOT_DIR)
+    scripts_dir = os.path.join(ROOT_DIR, "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
 
 APP_DIR = os.path.dirname(os.path.abspath(sys.executable)) if getattr(sys, "frozen", False) else ROOT_DIR
 
@@ -159,8 +164,19 @@ class HayamimiGUI(tk.Tk):
         header_frame = ttk.Frame(self, padding=(10, 5, 10, 5))
         header_frame.pack(fill=tk.X, expand=False)
 
-        self.title_lbl = ttk.Label(header_frame, text="", font=("Helvetica", 14, "bold"))
-        self.title_lbl.pack(side=tk.LEFT)
+        title_container = ttk.Frame(header_frame)
+        title_container.pack(side=tk.LEFT)
+
+        self.title_lbl = ttk.Label(title_container, text="", font=("Helvetica", 14, "bold"))
+        self.title_lbl.pack(side=tk.TOP, anchor=tk.W)
+
+        self.attr_lbl = ttk.Label(
+            title_container,
+            text="Hayamimi (MIT License) — Original Repository: https://github.com/oboroge0/hayamimi",
+            font=("Helvetica", 8),
+            foreground="#555555",
+        )
+        self.attr_lbl.pack(side=tk.TOP, anchor=tk.W, pady=(2, 0))
 
         self.lang_select_lbl = ttk.Label(header_frame, text="")
         self.lang_select_lbl.pack(side=tk.RIGHT, padx=(10, 5))
