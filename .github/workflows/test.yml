@@ -12,5 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
       - run: pip install sherpa-onnx numpy scipy soundfile pytest
       - run: python -m pytest tests -q
