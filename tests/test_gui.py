@@ -93,6 +93,20 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         app.lang_guard_var.get.return_value = "2.0"
         app.lid_confirm_var = MagicMock()
         app.lid_confirm_var.get.return_value = "2"
+        app.vrchat_var = MagicMock()
+        app.vrchat_var.get.return_value = False
+        app.vrchat_fmt_var = MagicMock()
+        app.vrchat_fmt_var.get.return_value = "both"
+        app.vrchat_fmt_dropdown = MagicMock()
+        app.vrchat_fmt_dropdown.get.return_value = "Both (Source | Translated)"
+        app.vrchat_fmt_map = {"Both (Source | Translated)": "both"}
+
+        app.vrchat_var = MagicMock()
+        app.vrchat_var.get.return_value = False
+        app.vrchat_fmt_dropdown = MagicMock()
+        app.vrchat_fmt_dropdown.get.return_value = "Both (Source | Translated)"
+        app.vrchat_fmt_map = {"Both (Source | Translated)": "both"}
+
         app.serve_var = MagicMock()
         app.serve_var.get.return_value = True
 
@@ -188,6 +202,12 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         self, mock_update_ui, mock_refresh, mock_poll, mock_widgets
     ):
         app = gui.HayamimiGUI.__new__(gui.HayamimiGUI)
+        app.vrchat_var = MagicMock()
+        app.vrchat_var.get.return_value = False
+        app.vrchat_fmt_dropdown = MagicMock()
+        app.vrchat_fmt_dropdown.get.return_value = "Both (Source | Translated)"
+        app.vrchat_fmt_map = {"Both (Source | Translated)": "both"}
+
         app.input_mode_map = {
             "WebSocket audio network input": "ws",
             "Microphone standard input": "mic",
@@ -344,6 +364,12 @@ class TestHayamimiGUIUnit(unittest.TestCase):
         app.lang_guard_var.get.return_value = "2.0"
         app.lid_confirm_var = MagicMock()
         app.lid_confirm_var.get.return_value = "2"
+
+        app.vrchat_var = MagicMock()
+        app.vrchat_var.get.return_value = False
+        app.vrchat_fmt_dropdown = MagicMock()
+        app.vrchat_fmt_dropdown.get.return_value = "Both (Source | Translated)"
+        app.vrchat_fmt_map = {"Both (Source | Translated)": "both"}
 
         app.serve_var = MagicMock()
         app.serve_var.get.return_value = True

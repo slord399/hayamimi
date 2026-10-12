@@ -69,6 +69,14 @@
     "overlay_desc": "OBS 覆蓋層: 設定為 OBS 瀏覽器源 URL 以在直播畫面上顯示字幕。",
     "transcript_desc": "轉寫文本頁: 僅顯示精鍊後嘅轉寫文本。"
   },
+  "vrchat": {
+    "frame_title": "VRChat 聊天框設定 (OSC)",
+    "enable_vrchat": "啟用 VRChat 聊天框支援",
+    "format": "發送格式:",
+    "format_both": "兩者 (原文 | 翻譯)",
+    "format_source": "僅原文",
+    "format_translated": "僅翻譯"
+  },
   "console": {
     "frame_title": "控制台輸出"
   }
