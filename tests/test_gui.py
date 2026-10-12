@@ -46,6 +46,70 @@ class TestHayamimiGUIUnit(unittest.TestCase):
     @patch("gui.HayamimiGUI._poll_log_queue")
     @patch("gui.HayamimiGUI._refresh_audio_devices")
     @patch("gui.HayamimiGUI._update_ui_strings")
+    def test_config_saving_and_restoration(
+        self, mock_update_ui, mock_refresh, mock_poll, mock_widgets
+    ):
+        app = gui.HayamimiGUI.__new__(gui.HayamimiGUI)
+        app.ui_lang = "ja"
+        app.minimal_var = MagicMock()
+        app.minimal_var.get.return_value = True
+        app.input_var = MagicMock()
+        app.input_var.get.return_value = "mic"
+        app.mic_var = MagicMock()
+        app.mic_var.get.return_value = "Mic 1"
+        app.speaker_var = MagicMock()
+        app.speaker_var.get.return_value = "Speaker 1"
+        app.ws_host_var = MagicMock()
+        app.ws_host_var.get.return_value = "127.0.0.1"
+        app.ws_port_var = MagicMock()
+        app.ws_port_var.get.return_value = "8766"
+        app.en_tier_var = MagicMock()
+        app.en_tier_var.get.return_value = "v3"
+        app.punct_var = MagicMock()
+        app.punct_var.get.return_value = "bert"
+        app.threads_var = MagicMock()
+        app.threads_var.get.return_value = "4"
+        app.min_silence_var = MagicMock()
+        app.min_silence_var.get.return_value = "0.35"
+        app.max_speech_var = MagicMock()
+        app.max_speech_var.get.return_value = "12.0"
+        app.max_resident_var = MagicMock()
+        app.max_resident_var.get.return_value = "3"
+        app.no_partial_var = MagicMock()
+        app.no_partial_var.get.return_value = False
+        app.no_refine_var = MagicMock()
+        app.no_refine_var.get.return_value = False
+        app.speakers_var = MagicMock()
+        app.speakers_var.get.return_value = False
+        app.translate_var = MagicMock()
+        app.translate_var.get.return_value = ""
+        app.hotwords_var = MagicMock()
+        app.hotwords_var.get.return_value = ""
+        app.replace_var = MagicMock()
+        app.replace_var.get.return_value = ""
+        app.mode_var = MagicMock()
+        app.mode_var.get.return_value = "balanced"
+        app.lang_guard_var = MagicMock()
+        app.lang_guard_var.get.return_value = "2.0"
+        app.lid_confirm_var = MagicMock()
+        app.lid_confirm_var.get.return_value = "2"
+        app.serve_var = MagicMock()
+        app.serve_var.get.return_value = True
+
+        cfg = gui.HayamimiGUI._get_current_config(app)
+        self.assertEqual(cfg["mic_device"], "Mic 1")
+        self.assertEqual(cfg["speaker_device"], "Speaker 1")
+
+        # Restoration
+        mock_cfg = {"mic_device": "Saved Mic", "threads": "8"}
+        gui.HayamimiGUI._restore_saved_config(app, mock_cfg)
+        app.mic_var.set.assert_called_with("Saved Mic")
+        app.threads_var.set.assert_called_with("8")
+
+    @patch("gui.HayamimiGUI._create_widgets")
+    @patch("gui.HayamimiGUI._poll_log_queue")
+    @patch("gui.HayamimiGUI._refresh_audio_devices")
+    @patch("gui.HayamimiGUI._update_ui_strings")
     def test_start_download_status_update(
         self, mock_update_ui, mock_refresh, mock_poll, mock_widgets
     ):

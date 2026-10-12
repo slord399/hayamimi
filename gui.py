@@ -140,11 +140,90 @@ class HayamimiGUI(tk.Tk):
         self.log_queue = queue.Queue()
 
         self._create_widgets()
+        self._restore_saved_config(saved_cfg)
         self._refresh_audio_devices()
         self._poll_log_queue()
         self._update_ui_strings()
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _get_current_config(self) -> dict:
+        return {
+            "ui_lang": self.ui_lang,
+            "minimal": self.minimal_var.get(),
+            "input": self.input_var.get(),
+            "mic_device": self.mic_var.get(),
+            "speaker_device": self.speaker_var.get(),
+            "ws_host": self.ws_host_var.get(),
+            "ws_port": self.ws_port_var.get(),
+            "en_tier": self.en_tier_var.get(),
+            "punct_model": self.punct_var.get(),
+            "threads": self.threads_var.get(),
+            "min_silence": self.min_silence_var.get(),
+            "max_speech": self.max_speech_var.get(),
+            "max_resident": self.max_resident_var.get(),
+            "no_partial": self.no_partial_var.get(),
+            "no_refine": self.no_refine_var.get(),
+            "speakers": self.speakers_var.get(),
+            "translate": self.translate_var.get(),
+            "hotwords": self.hotwords_var.get(),
+            "replace": self.replace_var.get(),
+            "mode": self.mode_var.get(),
+            "lang_guard": self.lang_guard_var.get(),
+            "lid_confirm": self.lid_confirm_var.get(),
+            "serve": self.serve_var.get(),
+        }
+
+    def _restore_saved_config(self, cfg: dict):
+        if not cfg:
+            return
+        if "minimal" in cfg:
+            self.minimal_var.set(cfg["minimal"])
+        if "input" in cfg:
+            self.input_var.set(cfg["input"])
+        if "mic_device" in cfg:
+            self.mic_var.set(cfg["mic_device"])
+        if "speaker_device" in cfg:
+            self.speaker_var.set(cfg["speaker_device"])
+        if "ws_host" in cfg:
+            self.ws_host_var.set(cfg["ws_host"])
+        if "ws_port" in cfg:
+            self.ws_port_var.set(cfg["ws_port"])
+        if "en_tier" in cfg:
+            self.en_tier_var.set(cfg["en_tier"])
+        if "punct_model" in cfg:
+            self.punct_var.set(cfg["punct_model"])
+        if "threads" in cfg:
+            self.threads_var.set(cfg["threads"])
+        if "min_silence" in cfg:
+            self.min_silence_var.set(cfg["min_silence"])
+        if "max_speech" in cfg:
+            self.max_speech_var.set(cfg["max_speech"])
+        if "max_resident" in cfg:
+            self.max_resident_var.set(cfg["max_resident"])
+        if "no_partial" in cfg:
+            self.no_partial_var.set(cfg["no_partial"])
+        if "no_refine" in cfg:
+            self.no_refine_var.set(cfg["no_refine"])
+        if "speakers" in cfg:
+            self.speakers_var.set(cfg["speakers"])
+        if "translate" in cfg:
+            self.translate_var.set(cfg["translate"])
+        if "hotwords" in cfg:
+            self.hotwords_var.set(cfg["hotwords"])
+        if "replace" in cfg:
+            self.replace_var.set(cfg["replace"])
+        if "mode" in cfg:
+            self.mode_var.set(cfg["mode"])
+        if "lang_guard" in cfg:
+            self.lang_guard_var.set(cfg["lang_guard"])
+        if "lid_confirm" in cfg:
+            self.lid_confirm_var.set(cfg["lid_confirm"])
+        if "serve" in cfg:
+            self.serve_var.set(cfg["serve"])
+
+    def _save_current_config(self):
+        save_config(self._get_current_config())
 
     def t(self, key_path: str, default: str = "") -> str:
         """Helper to retrieve nested translation key e.g. 'audio_settings.frame_title'."""
@@ -589,10 +668,7 @@ class HayamimiGUI(tk.Tk):
             self.ui_lang = code
             self.i18n = load_locale(code)
             self._update_ui_strings()
-
-            cfg = load_saved_config()
-            cfg["ui_lang"] = code
-            save_config(cfg)
+            self._save_current_config()
 
     def _browse_hotwords(self):
         filename = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
@@ -1047,6 +1123,10 @@ class HayamimiGUI(tk.Tk):
             self.canvas.yview_scroll(delta, "units")
 
     def _on_close(self):
+        try:
+            self._save_current_config()
+        except Exception:
+            pass
         if self.transcribe_stop_event is not None:
             self.transcribe_stop_event.set()
         elif self.transcribe_process and self.transcribe_process.poll() is None:
