@@ -7,7 +7,14 @@
     "download_btn": "下载模型",
     "in_progress": "模型下载已在运行中。",
     "started": "开始下载模型",
-    "completed": "模型下载过程已完成。"
+    "completed": "模型下载过程已完成。",
+    "total_progress_idle": "总体进度: 空闲",
+    "current_file_ready": "当前文件: 就绪",
+    "current_file_starting": "当前文件: 开始中...",
+    "current_file_completed": "当前文件: 已完成",
+    "total_progress_header": "总体进度",
+    "current_file_header": "当前文件",
+    "current_file_init": "当前文件: 初始化中..."
   },
   "audio_settings": {
     "frame_title": "音频输入源与设备选择",
@@ -58,9 +65,9 @@
   "server_settings": {
     "frame_title": "可选本地服务器设置",
     "enable_server": "启用本地服务器 (--serve)",
-    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
-    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
-    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+    "dashboard_desc": "仪表盘: 显示实时语音文本、确定行、翻译和精炼转写文本。",
+    "overlay_desc": "OBS 覆盖层: 设置为 OBS 浏览器源 URL 以在直播画面上显示字幕。",
+    "transcript_desc": "转写文本页: 仅显示精炼后的转写文本。"
   },
   "console": {
     "frame_title": "控制台输出"

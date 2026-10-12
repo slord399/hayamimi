@@ -65,9 +65,9 @@
   "server_settings": {
     "frame_title": "ローカルサーバー設定 (任意)",
     "enable_server": "ローカルサーバーを有効化 (--serve)",
-    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
-    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
-    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+    "dashboard_desc": "ダッシュボード: リアルタイム音声テキスト、確定行、翻訳、清書テキストを表示。",
+    "overlay_desc": "OBS オーバーレイ: 配信画面に字幕を表示するOBSブラウザソースURL。",
+    "transcript_desc": "文字起こしページ: 清書後の文字起こしテキストのみを表示。"
   },
   "console": {
     "frame_title": "コンソール出力"
