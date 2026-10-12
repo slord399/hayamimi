@@ -1369,3 +1369,62 @@ def test_punct4_prefers_int8_when_present(tmp_path):
     (tmp_path / "quantized_ort").mkdir()
     (tmp_path / "quantized_ort" / "punct_4class.int8.onnx").write_bytes(b"x")
     assert asr_engine._punct4_onnx_filename(tmp_path) == asr_engine.PUNCT4_INT8_FILENAME
+
+
+def test_vrchat_osc_sender_sanitize_text():
+    from realtime_transcribe import VRChatOSCSender
+
+    sender = VRChatOSCSender()
+    assert sender.sanitize_text("") == ""
+    assert sender.sanitize_text("Hello VRChat") == "Hello VRChat"
+
+    # Line limit: 12 lines -> truncated to 9 lines
+    lines_input = "\n".join([f"Line {i}" for i in range(12)])
+    sanitized_lines = sender.sanitize_text(lines_input)
+    assert len(sanitized_lines.splitlines()) == 9
+    assert sanitized_lines.startswith("Line 0")
+    assert sanitized_lines.endswith("Line 8")
+
+    # Character limit: 200 chars -> truncated to 144
+    long_text = "a" * 200
+    sanitized_char = sender.sanitize_text(long_text)
+    assert len(sanitized_char) == 144
+    assert sanitized_char == "a" * 144
+
+
+def test_vrchat_osc_sender_send_now():
+    from unittest.mock import MagicMock, patch
+    from realtime_transcribe import VRChatOSCSender
+
+    sender = VRChatOSCSender(host="127.0.0.1", port=9000)
+
+    # Test pythonosc client path by mocking pythonosc module in sys.modules
+    mock_udp_client_mod = MagicMock()
+    mock_client = MagicMock()
+    mock_udp_client_mod.SimpleUDPClient.return_value = mock_client
+
+    with patch.dict("sys.modules", {"pythonosc": MagicMock(), "pythonosc.udp_client": mock_udp_client_mod}):
+        sender.send_now("Test Message")
+        mock_udp_client_mod.SimpleUDPClient.assert_called_once_with("127.0.0.1", 9000)
+        mock_client.send_message.assert_called_once_with("/chatbox/input", ["Test Message", True, False])
+
+    # Test raw socket fallback path when pythonosc is missing
+    mock_socket = MagicMock()
+    with patch.dict("sys.modules", {"pythonosc": None, "pythonosc.udp_client": None}), \
+         patch("socket.socket", return_value=mock_socket):
+        sender.send_now("Fallback Message")
+        mock_socket.sendto.assert_called_once()
+        args, _ = mock_socket.sendto.call_args
+        pkt, addr = args
+        assert addr == ("127.0.0.1", 9000)
+        assert b"/chatbox/input\x00\x00" in pkt
+        assert b",sTF\x00\x00\x00\x00" in pkt
+        assert b"Fallback Message" in pkt
+
+
+def test_vrchat_osc_build_packet():
+    from realtime_transcribe import VRChatOSCSender
+
+    sender = VRChatOSCSender()
+    pkt = sender._build_osc_packet("/chatbox/input", "Hello")
+    assert pkt.startswith(b"/chatbox/input\x00\x00,sTF\x00\x00\x00\x00Hello\x00\x00\x00")

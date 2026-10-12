@@ -2160,7 +2160,7 @@ def reset_live_session(asr: "RoutedASR | None", refiner: "Refiner | None",
 
 
 class VRChatOSCSender:
-    """Sends transcript updates to VRChat's chatbox via OSC UDP (/chat/input)."""
+    """Sends transcript updates to VRChat's chatbox via OSC UDP (/chatbox/input)."""
 
     def __init__(self, fmt: str = "both", host: str = "127.0.0.1", port: int = 9000):
         self.fmt = fmt
@@ -2182,7 +2182,19 @@ class VRChatOSCSender:
         str_bytes = _pad(text.encode("utf-8"))
         return addr_bytes + type_tag + str_bytes
 
+    def sanitize_text(self, text: str) -> str:
+        if not text:
+            return ""
+        lines = text.splitlines()
+        if len(lines) > 9:
+            lines = lines[:9]
+        text = "\n".join(lines)
+        if len(text) > 144:
+            text = text[:144]
+        return text
+
     def send_now(self, text: str):
+        text = self.sanitize_text(text)
         if not text.strip():
             return
         import socket
@@ -2190,9 +2202,9 @@ class VRChatOSCSender:
             try:
                 from pythonosc.udp_client import SimpleUDPClient
                 client = SimpleUDPClient(self.host, self.port)
-                client.send_message("/chat/input", [text, True, False])
+                client.send_message("/chatbox/input", [text, True, False])
             except ImportError:
-                pkt = self._build_osc_packet("/chat/input", text)
+                pkt = self._build_osc_packet("/chatbox/input", text)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 sock.sendto(pkt, (self.host, self.port))
                 sock.close()
@@ -2390,7 +2402,7 @@ def main(stop_event: "threading.Event | None" = None):
                          "-- other targets print an 'unvalidated' note to stderr, see "
                          "docs/design/translate_m2m.md")
     ap.add_argument("--vrchat", action="store_true",
-                    help="enable VRChat Chatbox OSC support (sends to 127.0.0.1:9000 /chat/input)")
+                    help="enable VRChat Chatbox OSC support (sends to 127.0.0.1:9000 /chatbox/input)")
     ap.add_argument("--vrchat-format", choices=["both", "source", "translated"], default="both",
                     help="text format for VRChat Chatbox: both (Source | Translated), source, or translated")
     ap.add_argument("--input", choices=["mic", "wav", "ws", "speaker", "mix"], default=None,
@@ -2462,7 +2474,7 @@ def main(stop_event: "threading.Event | None" = None):
     if args.vrchat:
         vrchat_sender = VRChatOSCSender(fmt=args.vrchat_format)
         hub.add_listener(vrchat_sender.on_event)
-        print(f"VRChat OSC Chatbox enabled: sending to 127.0.0.1:9000 /chat/input (format: {args.vrchat_format})",
+        print(f"VRChat OSC Chatbox enabled: sending to 127.0.0.1:9000 /chatbox/input (format: {args.vrchat_format})",
               file=sys.stderr)
 
     # Review round 1: a POST /reset (or any other future control operation)
