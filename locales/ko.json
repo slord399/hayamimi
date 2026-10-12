@@ -7,7 +7,14 @@
     "download_btn": "모델 다운로드",
     "in_progress": "모델 다운로드가 이미 실행 중입니다.",
     "started": "모델 다운로드 시작 중",
-    "completed": "모델 다운로드 프로세스가 완료되었습니다."
+    "completed": "모델 다운로드 프로세스가 완료되었습니다.",
+    "total_progress_idle": "전체 진행률: 대기 중",
+    "current_file_ready": "현재 파일: 준비 완료",
+    "current_file_starting": "현재 파일: 시작 중...",
+    "current_file_completed": "현재 파일: 완료됨",
+    "total_progress_header": "전체 진행률",
+    "current_file_header": "현재 파일",
+    "current_file_init": "현재 파일: 초기화 중..."
   },
   "audio_settings": {
     "frame_title": "오디오 입력 소스 및 장치 선택",
@@ -58,9 +65,9 @@
   "server_settings": {
     "frame_title": "선택적 로컬 서버 설정",
     "enable_server": "로컬 서버 활성화 (--serve)",
-    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
-    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
-    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+    "dashboard_desc": "대시보드: 실시간 음성 텍스트, 확정된 문장, 번역 및 정제된 음성 인식 텍스트를 표시합니다.",
+    "overlay_desc": "OBS 오버레이: 방송 화면에 자막을 표시하기 위한 OBS 브라우저 소스 URL입니다.",
+    "transcript_desc": "음성 인식 페이지: 정제된 음성 인식 텍스트만 표시합니다."
   },
   "console": {
     "frame_title": "콘솔 출력"

@@ -176,9 +176,6 @@ class HayamimiGUI(tk.Tk):
         )
         self.attr_lbl.pack(side=tk.TOP, anchor=tk.W, pady=(2, 0))
 
-        self.lang_select_lbl = ttk.Label(header_frame, text="")
-        self.lang_select_lbl.pack(side=tk.RIGHT, padx=(10, 5))
-
         self.ui_lang_var = tk.StringVar(value=self.REV_LANG_MAP.get(self.ui_lang, "Japanese"))
         self.ui_lang_dropdown = ttk.Combobox(
             header_frame,
@@ -188,6 +185,10 @@ class HayamimiGUI(tk.Tk):
             width=12,
         )
         self.ui_lang_dropdown.pack(side=tk.RIGHT)
+
+        self.lang_select_lbl = ttk.Label(header_frame, text="")
+        self.lang_select_lbl.pack(side=tk.RIGHT, padx=(10, 5))
+
         self.ui_lang_dropdown.bind("<<ComboboxSelected>>", self._on_ui_language_changed)
 
         # Scrollable Canvas Container for controls
@@ -465,8 +466,21 @@ class HayamimiGUI(tk.Tk):
         for url, desc_key in addresses:
             row = ttk.Frame(self.urls_subframe)
             row.pack(fill=tk.X, pady=4)
-            url_lbl = ttk.Label(row, text=url, font=("Courier", 9, "bold"), foreground="#0066cc")
-            url_lbl.pack(side=tk.LEFT, anchor=tk.W, padx=(0, 10))
+
+            url_var = tk.StringVar(value=url)
+            url_entry = tk.Entry(
+                row,
+                textvariable=url_var,
+                font=("Courier", 9, "bold"),
+                foreground="#0066cc",
+                bd=0,
+                relief="flat",
+                state="readonly",
+                readonlybackground=self.cget("bg"),
+                width=32,
+            )
+            url_entry.pack(side=tk.LEFT, anchor=tk.W, padx=(0, 10))
+
             desc_lbl = ttk.Label(row, text="", font=("Helvetica", 9), wraplength=450, justify=tk.LEFT)
             desc_lbl.pack(side=tk.LEFT, anchor=tk.W, fill=tk.X, expand=True)
             self.address_widgets.append((desc_lbl, desc_key))
@@ -487,6 +501,10 @@ class HayamimiGUI(tk.Tk):
         self.dl_frame.config(text=self.t("model_download.frame_title"))
         self.minimal_check.config(text=self.t("model_download.minimal_check"))
         self.dl_btn.config(text=self.t("model_download.download_btn"))
+
+        if not hasattr(self, "download_process") or self.download_process is None:
+            self.dl_total_status_var.set(self.t("model_download.total_progress_idle", default="Total Progress: Idle"))
+            self.dl_file_status_var.set(self.t("model_download.current_file_ready", default="Current File: Ready"))
 
         self.audio_frame.config(text=self.t("audio_settings.frame_title"))
         self.lbl_input_mode.config(text=self.t("audio_settings.input_mode"))
@@ -818,6 +836,7 @@ class HayamimiGUI(tk.Tk):
             if not cur_status or ("Error" not in cur_status and "code" not in cur_status):
                 self.dl_total_status_var.set(f"{tot_hdr}: " + self.t("model_download.completed"))
                 self.dl_file_status_var.set(cur_file_comp)
+                self._log("\n>>> Language models updated successfully. Dynamic engine reload complete.\n")
 
         if py_cmd is None or getattr(sys, "frozen", False):
             self._run_download_in_thread(self.minimal_var.get(), on_complete=complete)

@@ -7,7 +7,14 @@
     "download_btn": "下載模型",
     "in_progress": "模型下載已經運行緊。",
     "started": "開始下載模型",
-    "completed": "模型下載程序已完成。"
+    "completed": "模型下載程序已完成。",
+    "total_progress_idle": "總體進度: 空閒",
+    "current_file_ready": "當前檔案: 就緒",
+    "current_file_starting": "當前檔案: 開始緊...",
+    "current_file_completed": "當前檔案: 已完成",
+    "total_progress_header": "總體進度",
+    "current_file_header": "當前檔案",
+    "current_file_init": "當前檔案: 初始化緊..."
   },
   "audio_settings": {
     "frame_title": "音訊輸入源同設備選擇",
@@ -58,9 +65,9 @@
   "server_settings": {
     "frame_title": "可選本地伺服器設定",
     "enable_server": "啟用本地伺服器 (--serve)",
-    "dashboard_desc": "Dashboard: Displays live speech text, finalized lines, translations, and polished transcript.",
-    "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
-    "transcript_desc": "Transcript Page: Displays the polished transcript only."
+    "dashboard_desc": "儀表板: 顯示即時語音文本、確定行、翻譯同精鍊轉寫文本。",
+    "overlay_desc": "OBS 覆蓋層: 設定為 OBS 瀏覽器源 URL 以在直播畫面上顯示字幕。",
+    "transcript_desc": "轉寫文本頁: 僅顯示精鍊後嘅轉寫文本。"
   },
   "console": {
     "frame_title": "控制台輸出"
