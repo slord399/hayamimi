@@ -69,6 +69,14 @@
     "overlay_desc": "OBS Overlay: Set as an OBS browser source URL to display subtitles on a streaming screen.",
     "transcript_desc": "Transcript Page: Displays the polished transcript only."
   },
+  "vrchat": {
+    "frame_title": "VRChat Chatbox Settings (OSC)",
+    "enable_vrchat": "Enable VRChat Chatbox Support",
+    "format": "Format:",
+    "format_both": "Both (Source | Translated)",
+    "format_source": "Source Only",
+    "format_translated": "Translated Only"
+  },
   "console": {
     "frame_title": "Console Output"
   }

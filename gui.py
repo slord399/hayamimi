@@ -171,6 +171,8 @@ class HayamimiGUI(tk.Tk):
             "mode": self.mode_var.get(),
             "lang_guard": self.lang_guard_var.get(),
             "lid_confirm": self.lid_confirm_var.get(),
+            "vrchat": self.vrchat_var.get(),
+            "vrchat_format": self.vrchat_fmt_var.get(),
             "serve": self.serve_var.get(),
         }
 
@@ -219,6 +221,10 @@ class HayamimiGUI(tk.Tk):
             self.lang_guard_var.set(cfg["lang_guard"])
         if "lid_confirm" in cfg:
             self.lid_confirm_var.set(cfg["lid_confirm"])
+        if "vrchat" in cfg:
+            self.vrchat_var.set(cfg["vrchat"])
+        if "vrchat_format" in cfg:
+            self.vrchat_fmt_var.set(cfg["vrchat_format"])
         if "serve" in cfg:
             self.serve_var.set(cfg["serve"])
 
@@ -520,7 +526,27 @@ class HayamimiGUI(tk.Tk):
         self.lid_confirm_entry = ttk.Entry(self.lang_sw_frame, textvariable=self.lid_confirm_var, width=8)
         self.lid_confirm_entry.grid(row=4, column=1, sticky=tk.W, pady=4)
 
-        # 6. Optional Local Server Settings
+        # 6. VRChat Chatbox Settings (OSC)
+        self.vrchat_frame = ttk.LabelFrame(top_frame, text="", padding=10)
+        self.vrchat_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.vrchat_var = tk.BooleanVar(value=False)
+        self.vrchat_check = ttk.Checkbutton(self.vrchat_frame, text="", variable=self.vrchat_var)
+        self.vrchat_check.pack(side=tk.LEFT, padx=(0, 15))
+
+        self.lbl_vrchat_fmt = ttk.Label(self.vrchat_frame, text="")
+        self.lbl_vrchat_fmt.pack(side=tk.LEFT, padx=(0, 5))
+
+        self.vrchat_fmt_var = tk.StringVar(value="both")
+        self.vrchat_fmt_dropdown = ttk.Combobox(
+            self.vrchat_frame,
+            textvariable=self.vrchat_fmt_var,
+            state="readonly",
+            width=25,
+        )
+        self.vrchat_fmt_dropdown.pack(side=tk.LEFT)
+
+        # 7. Optional Local Server Settings
         self.server_frame = ttk.LabelFrame(top_frame, text="", padding=10)
         self.server_frame.pack(fill=tk.X, pady=(0, 10))
 
@@ -652,6 +678,29 @@ class HayamimiGUI(tk.Tk):
         self.lbl_mode.config(text=self.t("lang_switching.mode"))
         self.lbl_lang_guard.config(text=self.t("lang_switching.lang_guard"))
         self.lbl_lid_confirm.config(text=self.t("lang_switching.lid_confirm"))
+
+        self.vrchat_frame.config(text=self.t("vrchat.frame_title"))
+        self.vrchat_check.config(text=self.t("vrchat.enable_vrchat"))
+        self.lbl_vrchat_fmt.config(text=self.t("vrchat.format"))
+
+        fmt_names = [
+            self.t("vrchat.format_both"),
+            self.t("vrchat.format_source"),
+            self.t("vrchat.format_translated"),
+        ]
+        self.vrchat_fmt_map = {
+            self.t("vrchat.format_both"): "both",
+            self.t("vrchat.format_source"): "source",
+            self.t("vrchat.format_translated"): "translated",
+        }
+        self.vrchat_fmt_dropdown["values"] = fmt_names
+        cur_fmt = self.vrchat_fmt_var.get()
+        matched_fmt = fmt_names[0]
+        for name, code in self.vrchat_fmt_map.items():
+            if code == cur_fmt:
+                matched_fmt = name
+                break
+        self.vrchat_fmt_dropdown.set(matched_fmt)
 
         self.server_frame.config(text=self.t("server_settings.frame_title"))
         self.serve_check.config(text=self.t("server_settings.enable_server"))
@@ -1074,6 +1123,13 @@ class HayamimiGUI(tk.Tk):
         lid_confirm = self.lid_confirm_var.get().strip()
         if lid_confirm:
             cmd_args.extend(["--lid-switch-confirm", lid_confirm])
+
+        # VRChat OSC
+        if self.vrchat_var.get():
+            cmd_args.append("--vrchat")
+            selected_fmt_str = self.vrchat_fmt_dropdown.get()
+            vrchat_fmt = self.vrchat_fmt_map.get(selected_fmt_str, "both")
+            cmd_args.extend(["--vrchat-format", vrchat_fmt])
 
         # Server
         if self.serve_var.get():

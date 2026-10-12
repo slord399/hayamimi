@@ -69,6 +69,14 @@
     "overlay_desc": "OBS オーバーレイ: 配信画面に字幕を表示するOBSブラウザソースURL。",
     "transcript_desc": "文字起こしページ: 清書後の文字起こしテキストのみを表示。"
   },
+  "vrchat": {
+    "frame_title": "VRChat チャットボックス設定 (OSC)",
+    "enable_vrchat": "VRChat チャットボックス連携を有効化",
+    "format": "送信フォーマット:",
+    "format_both": "両方 (原文 | 翻訳)",
+    "format_source": "原文のみ",
+    "format_translated": "翻訳のみ"
+  },
   "console": {
     "frame_title": "コンソール出力"
   }

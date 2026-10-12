@@ -2159,6 +2159,80 @@ def reset_live_session(asr: "RoutedASR | None", refiner: "Refiner | None",
         hub.publish({"type": "session_reset"})
 
 
+class VRChatOSCSender:
+    """Sends transcript updates to VRChat's chatbox via OSC UDP (/chat/input)."""
+
+    def __init__(self, fmt: str = "both", host: str = "127.0.0.1", port: int = 9000):
+        self.fmt = fmt
+        self.host = host
+        self.port = port
+        self.last_sent_time = 0.0
+        self.min_interval_s = 1.5  # VRChat chatbox rate-limit
+        self.pending_msg = None
+        self.last_source = ""
+        self.last_translation = ""
+        self._lock = threading.Lock()
+
+    def _build_osc_packet(self, address: str, text: str) -> bytes:
+        def _pad(b: bytes) -> bytes:
+            return b + b"\x00" * ((4 - (len(b) % 4)) or 4)
+
+        addr_bytes = _pad(address.encode("utf-8"))
+        type_tag = _pad(b",sTF")
+        str_bytes = _pad(text.encode("utf-8"))
+        return addr_bytes + type_tag + str_bytes
+
+    def send_now(self, text: str):
+        if not text.strip():
+            return
+        import socket
+        try:
+            try:
+                from pythonosc.udp_client import SimpleUDPClient
+                client = SimpleUDPClient(self.host, self.port)
+                client.send_message("/chat/input", [text, True, False])
+            except ImportError:
+                pkt = self._build_osc_packet("/chat/input", text)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.sendto(pkt, (self.host, self.port))
+                sock.close()
+            self.last_sent_time = time.time()
+        except Exception as exc:
+            print(f"[VRChat OSC] Failed to send chatbox packet: {exc}", file=sys.stderr)
+
+    def on_event(self, ev: dict):
+        ev_type = ev.get("type")
+        if ev_type not in ("final", "translation"):
+            return
+
+        with self._lock:
+            if ev_type == "final":
+                self.last_source = ev.get("text", "").strip()
+                self.last_translation = ""
+            elif ev_type == "translation":
+                self.last_translation = ev.get("text", "").strip()
+
+            if self.fmt == "source":
+                msg = self.last_source
+            elif self.fmt == "translated":
+                msg = self.last_translation or self.last_source
+            else:  # both
+                if self.last_source and self.last_translation:
+                    msg = f"{self.last_source} | {self.last_translation}"
+                else:
+                    msg = self.last_source or self.last_translation
+
+            if not msg:
+                return
+
+            now = time.time()
+            if now - self.last_sent_time >= self.min_interval_s:
+                self.send_now(msg)
+            else:
+                # Store pending to be sent after delay if needed
+                self.pending_msg = msg
+
+
 def main(stop_event: "threading.Event | None" = None):
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
@@ -2315,6 +2389,10 @@ def main(stop_event: "threading.Event | None" = None):
                          "supports it. Only zh/ko have measured translation quality so far "
                          "-- other targets print an 'unvalidated' note to stderr, see "
                          "docs/design/translate_m2m.md")
+    ap.add_argument("--vrchat", action="store_true",
+                    help="enable VRChat Chatbox OSC support (sends to 127.0.0.1:9000 /chat/input)")
+    ap.add_argument("--vrchat-format", choices=["both", "source", "translated"], default="both",
+                    help="text format for VRChat Chatbox: both (Source | Translated), source, or translated")
     ap.add_argument("--input", choices=["mic", "wav", "ws", "speaker", "mix"], default=None,
                     help="audio source; default is mic, or wav if --wav is given. "
                          "'speaker' transcribes whatever is playing on the PC's audio "
@@ -2381,6 +2459,12 @@ def main(stop_event: "threading.Event | None" = None):
     # without running a local HTTP server at all. --serve just adds that
     # HTTP layer as an optional front end over the same hub.
     hub = EventHub()
+    if args.vrchat:
+        vrchat_sender = VRChatOSCSender(fmt=args.vrchat_format)
+        hub.add_listener(vrchat_sender.on_event)
+        print(f"VRChat OSC Chatbox enabled: sending to 127.0.0.1:9000 /chat/input (format: {args.vrchat_format})",
+              file=sys.stderr)
+
     # Review round 1: a POST /reset (or any other future control operation)
     # must run ON the decode thread, not the HTTP handler thread -- see
     # ControlQueue's docstring. Polled by every run_stream() call below.

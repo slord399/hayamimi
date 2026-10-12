@@ -69,6 +69,14 @@
     "overlay_desc": "OBS 오버레이: 방송 화면에 자막을 표시하기 위한 OBS 브라우저 소스 URL입니다.",
     "transcript_desc": "음성 인식 페이지: 정제된 음성 인식 텍스트만 표시합니다."
   },
+  "vrchat": {
+    "frame_title": "VRChat 채팅 상자 설정 (OSC)",
+    "enable_vrchat": "VRChat 채팅 상자 연동 활성화",
+    "format": "전송 형식:",
+    "format_both": "둘 다 (원문 | 번역)",
+    "format_source": "원문만",
+    "format_translated": "번역만"
+  },
   "console": {
     "frame_title": "콘솔 출력"
   }
