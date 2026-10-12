@@ -2630,6 +2630,8 @@ def main(stop_event: "threading.Event | None" = None):
             refiner.close()
         translator_worker.close()
         asr.close()
+        if server is not None:
+            server.stop()
 
 
 if __name__ == "__main__":
