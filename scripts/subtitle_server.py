@@ -502,3 +502,12 @@ class SubtitleServer:
         self._httpd = http.server.ThreadingHTTPServer(("127.0.0.1", self.port), Handler)
         threading.Thread(target=self._httpd.serve_forever, daemon=True).start()
         return self
+
+    def stop(self):
+        if self._httpd is not None:
+            try:
+                self._httpd.shutdown()
+                self._httpd.server_close()
+            except Exception:
+                pass
+            self._httpd = None

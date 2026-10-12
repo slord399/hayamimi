@@ -192,8 +192,11 @@ class HayamimiGUI(tk.Tk):
         self.ui_lang_dropdown.bind("<<ComboboxSelected>>", self._on_ui_language_changed)
 
         # Scrollable Canvas Container for controls
-        self.canvas = tk.Canvas(self, borderwidth=0, highlightthickness=0)
-        self.scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.canvas.yview)
+        main_container = ttk.Frame(self)
+        main_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.canvas = tk.Canvas(main_container, borderwidth=0, highlightthickness=0)
+        self.scrollbar = ttk.Scrollbar(main_container, orient=tk.VERTICAL, command=self.canvas.yview)
         self.scroll_frame = ttk.Frame(self.canvas, padding=10)
 
         self.scroll_frame.bind(
@@ -207,8 +210,8 @@ class HayamimiGUI(tk.Tk):
             lambda e: self.canvas.itemconfig(self.canvas_frame_id, width=e.width)
         )
 
-        self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.bind_all("<MouseWheel>", self._on_mousewheel)
         self.bind_all("<Button-4>", self._on_mousewheel)
