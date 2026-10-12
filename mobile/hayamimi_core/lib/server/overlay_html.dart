@@ -13,18 +13,20 @@ const String overlayHtml = '''
     text-shadow: 0 0 8px #000, 0 0 4px #000, 2px 2px 2px #000;
   }
   #final-line, #partial-line { display: block; min-height: 1.4em; }
+  #trans-line { display: block; min-height: 1.2em; font-size: 75%; opacity: 0.9; margin-top: 0.2em; }
   #partial-line { opacity: 0.75; font-style: italic; font-size: 0.8em; }
 </style>
-<div id="box"><span id="final-line"></span><span id="partial-line"></span></div>
+<div id="box"><span id="final-line"></span><span id="trans-line"></span><span id="partial-line"></span></div>
 <script>
   // ?show=final / ?show=partial renders only that row, so OBS can place the
   // confirmed line and the in-progress line as two independent sources --
   // same convention as the desktop overlay (scripts/subtitle_server.py).
   const mode = new URLSearchParams(location.search).get("show") || "both";
   const fin = document.getElementById("final-line");
+  const tra = document.getElementById("trans-line");
   const par = document.getElementById("partial-line");
   if (mode === "final") par.style.display = "none";
-  if (mode === "partial") fin.style.display = "none";
+  if (mode === "partial") { fin.style.display = "none"; tra.style.display = "none"; }
   let clearTimer = null;
   const es = new EventSource("/events");
   es.onmessage = (e) => {
@@ -37,10 +39,13 @@ const String overlayHtml = '''
     if (ev.type === "partial") {
       par.textContent = ev.text;
     } else if (ev.type === "final") {
-      fin.textContent = ev.text;
+      fin.textContent = ev.text || ev.source_text || "";
+      tra.textContent = ev.translated_text || "";
       par.textContent = "";
+    } else if (ev.type === "translation") {
+      tra.textContent = ev.text || ev.translated_text || "";
     }
-    clearTimer = setTimeout(() => { fin.textContent = ""; }, 6000);
+    clearTimer = setTimeout(() => { fin.textContent = ""; tra.textContent = ""; }, 6000);
   };
 </script>
 ''';
